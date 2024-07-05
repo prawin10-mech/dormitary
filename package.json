@@ -8,7 +8,8 @@
     "dev": "concurrently \"npm run dev:client\" \"npm run dev:wss\"",
     "build": "next build",
     "build:server": "tsc",
-    "lint": "next lint"
+    "lint": "next lint",
+    "start": "concurrently \"next start\" \"npm run dev:wss\""
   },
   "dependencies": {
     "@types/cors": "^2.8.17",
