@@ -9,7 +9,7 @@
     "build": "next build",
     "build:server": "tsc",
     "lint": "next lint",
-    "start": "concurrently \"next start\" \"npm run dev:wss\""
+    "start": "next start"
   },
   "dependencies": {
     "@types/cors": "^2.8.17",
