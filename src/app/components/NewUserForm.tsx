@@ -2,43 +2,55 @@
 
 import React from "react";
 import { useForm, SubmitHandler, Resolver, FieldErrors } from "react-hook-form";
+import { BedTypes } from "../../../server/utils/BedTypes";
+import { useGlobalContext } from "@/lib/useGlobalContext";
+import toast, { ToastBar, Toaster } from "react-hot-toast";
+import { IBed } from "../../../server/models/bed.model";
 
 interface IFormInput {
-  customerName: string;
-  customerNumber: string;
-  customerEmail: string;
-  customerAge: number;
+  name: string;
+  number: string;
+  email: string;
+  age: number;
   photo: FileList;
-  aadhar: string;
+  aadhar: FileList;
+  bed: string;
 }
 
 const resolver: Resolver<IFormInput> = async (values) => {
   const errors: FieldErrors<IFormInput> = {};
-  if (!values.customerName) {
-    errors.customerName = {
+  if (!values.name) {
+    errors.name = {
       type: "required",
       message: "Customer Name is required.",
     };
   }
-  if (!values.customerNumber) {
-    errors.customerNumber = {
+
+  if (!values.bed) {
+    errors.bed = {
+      type: "required",
+      message: "Bed is required.",
+    };
+  }
+  if (!values.number) {
+    errors.number = {
       type: "required",
       message: "Customer Number is required.",
     };
   }
-  if (!values.customerEmail) {
-    errors.customerEmail = {
+  if (!values.email) {
+    errors.email = {
       type: "required",
       message: "Customer Email is required.",
     };
-  } else if (!/^\S+@\S+$/i.test(values.customerEmail)) {
-    errors.customerEmail = {
+  } else if (!/^\S+@\S+$/i.test(values.email)) {
+    errors.email = {
       type: "pattern",
       message: "Invalid email address.",
     };
   }
-  if (!values.customerAge || values.customerAge < 18) {
-    errors.customerAge = {
+  if (!values.age || values.age < 18) {
+    errors.age = {
       type: "min",
       message: "Customer Age must be at least 18.",
     };
@@ -49,12 +61,13 @@ const resolver: Resolver<IFormInput> = async (values) => {
       message: "Photo is required.",
     };
   }
-  if (!values.aadhar) {
+  if (!values.aadhar || values.aadhar.length === 0) {
     errors.aadhar = {
       type: "required",
       message: "Aadhar is required.",
     };
   }
+
   return {
     values: Object.keys(errors).length === 0 ? values : {},
     errors: errors,
@@ -62,14 +75,40 @@ const resolver: Resolver<IFormInput> = async (values) => {
 };
 
 const Form = () => {
+  const { allocateBed, getBeds, beds } = useGlobalContext();
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm<IFormInput>({ resolver });
 
-  const onSubmit: SubmitHandler<IFormInput> = (data) => {
-    console.log(data);
+  const onSubmit: SubmitHandler<IFormInput> = (values) => {
+    toast
+      .promise(
+        allocateBed(values),
+        {
+          loading: "Allocating bed Please wait",
+          success: () => `Bed Allocated`,
+          error: (err) => `${err.toString()}`,
+        },
+        {
+          style: {
+            minWidth: "250px",
+          },
+          success: {
+            duration: 5000,
+            icon: "🔥",
+          },
+          error: {
+            duration: 5000,
+            icon: "🛑",
+          },
+        }
+      )
+      .then(() => getBeds())
+      .catch((err) => {
+        console.log(err);
+      });
   };
 
   return (
@@ -78,48 +117,71 @@ const Form = () => {
         <label className="block text-gray-700">Customer Name</label>
         <input
           type="text"
-          {...register("customerName")}
+          {...register("name")}
           placeholder="Enter customer name"
           className="w-full px-3 py-2 border border-gray-300 rounded-lg"
         />
-        {errors.customerName && (
-          <span className="text-red-600">{errors.customerName.message}</span>
+        {errors.name && (
+          <span className="text-red-600">{errors.name.message}</span>
+        )}
+      </div>
+      <div>
+        <label className="block text-gray-700 font-medium mb-2">Bed</label>
+        <select
+          {...register("bed")}
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition ease-in-out duration-150"
+        >
+          {beds.map((bed: any) => (
+            <option
+              key={bed._id}
+              value={bed.bed}
+              disabled={bed.isOccupied}
+              className="cursor-pointer disabled:cursor-not-allowed"
+            >
+              {bed.bed}
+            </option>
+          ))}
+        </select>
+        {errors.bed && (
+          <span className="text-red-600 mt-1 text-sm">
+            {errors.bed.message}
+          </span>
         )}
       </div>
       <div>
         <label className="block text-gray-700">Customer Number</label>
         <input
           type="text"
-          {...register("customerNumber")}
+          {...register("number")}
           placeholder="Enter customer number"
           className="w-full px-3 py-2 border border-gray-300 rounded-lg"
         />
-        {errors.customerNumber && (
-          <span className="text-red-600">{errors.customerNumber.message}</span>
+        {errors.number && (
+          <span className="text-red-600">{errors.number.message}</span>
         )}
       </div>
       <div>
         <label className="block text-gray-700">Customer Email</label>
         <input
           type="email"
-          {...register("customerEmail")}
+          {...register("email")}
           placeholder="Enter customer email"
           className="w-full px-3 py-2 border border-gray-300 rounded-lg"
         />
-        {errors.customerEmail && (
-          <span className="text-red-600">{errors.customerEmail.message}</span>
+        {errors.email && (
+          <span className="text-red-600">{errors.email.message}</span>
         )}
       </div>
       <div>
         <label className="block text-gray-700">Customer Age</label>
         <input
           type="number"
-          {...register("customerAge")}
+          {...register("age")}
           placeholder="Enter customer age"
           className="w-full px-3 py-2 border border-gray-300 rounded-lg"
         />
-        {errors.customerAge && (
-          <span className="text-red-600">{errors.customerAge.message}</span>
+        {errors.age && (
+          <span className="text-red-600">{errors.age.message}</span>
         )}
       </div>
       <div>
@@ -138,7 +200,9 @@ const Form = () => {
       <div>
         <label className="block text-gray-700">Aadhar</label>
         <input
-          type="text"
+          type="file"
+          accept="image/*"
+          capture="environment"
           {...register("aadhar")}
           placeholder="Aadhar"
           className="w-full px-3 py-2 border border-gray-300 rounded-lg"
@@ -153,6 +217,19 @@ const Form = () => {
       >
         Submit
       </button>
+      <Toaster>
+        {(t) => (
+          <ToastBar
+            toast={t}
+            style={{
+              ...t.style,
+              animation: t.visible
+                ? "custom-enter 1s ease"
+                : "custom-exit 1s ease",
+            }}
+          />
+        )}
+      </Toaster>
     </form>
   );
 };
