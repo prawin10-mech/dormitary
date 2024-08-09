@@ -5,11 +5,12 @@
   "scripts": {
     "dev:client": "next dev",
     "dev:wss": "dotenv -e .env tsx watch ./server/server.ts --tsconfig tsconfig.server.json",
+    "build:server": "tsc --project tsconfig.server.json",
     "dev": "concurrently \"npm run dev:client\" \"npm run dev:wss\"",
     "build": "next build",
-    "build:server": "tsc",
     "lint": "next lint",
-    "start": "next start"
+    "start": "next start",
+    "start:server": "node dist/server.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
