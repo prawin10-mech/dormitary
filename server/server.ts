@@ -3,7 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import mongoose from "mongoose";
 
-import { UserRouter } from "./routes";
+import router from "./routes";
 
 const app = express();
 app.use(cors());
@@ -26,6 +26,6 @@ app.get("/", (req, res) => {
   return res.json({ message: "Welcome" });
 });
 
-app.use("/user", UserRouter);
+app.use("/api/v1", router);
 
 app.listen(apiPort, () => console.log("Server Started"));
