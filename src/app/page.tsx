@@ -14,7 +14,7 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="flex flex-col scrollbar-hide">
+    <div className="flex flex-col  scrollbar-width: none;">
       <div className="w-full bg-white shadow-lg rounded-lg mb-4 md:mb-0">
         <Header />
       </div>
