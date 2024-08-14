@@ -9,6 +9,8 @@ import dotenv from "dotenv";
 import dayjs from "dayjs";
 import AgendaHelper from "../functions/agenda_helper";
 import { sendWhatsappMessage } from "../functions/sendWhatsAppMessage";
+import { getHtmlContent } from "../functions/GetHtmlContent";
+import { generatePDF } from "../functions/generatePdf";
 
 dotenv.config();
 
@@ -93,17 +95,57 @@ export const AllocateBed = [
 
       AgendaHelper.scheduleEndBedPeriod(existingBed._id.toString(), endDate);
 
-      const message = await sendWhatsappMessage(
-        number,
-        `Your Bed ${bed} was allocated successfully Enjoy our services uninterrupted for the next 24 hours. Thank You`
-      );
-      console.log(message);
+      // const message = await sendWhatsappMessage(
+      //   number,
+      //   `Your Bed ${bed} was allocated successfully. Enjoy our services uninterrupted for the next 24 hours. Thank you!`
+      // );
 
-      return res.status(200).json({
+      const customersCount = await customerModel.countDocuments();
+
+      const invoice = {
+        product: {
+          title: existingBed.type === "A/C" ? "AC BED" : "Regular Bed",
+          description: `BED ${existingBed.bed}(${existingBed.type})`,
+          quantity: 1,
+          price: existingBed.type === "A/C" ? 200 : 100,
+        },
+        status: "paid",
+        dueDate: date.format("DD MMMM, YYYY"),
+        invoiceTo: {
+          name: newCustomer.name,
+          address: "",
+          phone: newCustomer.number,
+        },
+        createDate: date.format("DD MMMM, YYYY"),
+        invoiceFrom: {
+          name: "Murali Ande",
+          address: "Sri vijayalakshmi A/C Dormitary, Tanuku, 534210",
+          phone: "9876543210",
+        },
+        invoiceNumber: customersCount,
+        subTotalPrice: existingBed.type === "A/C" ? 200 : 100,
+        totalPrice: existingBed.type === "A/C" ? 200 : 100,
+        discount: 0.0,
+        taxes: 0.0,
+      };
+
+      const htmlContent = getHtmlContent(invoice);
+      const pdfBuffer = await generatePDF(htmlContent);
+
+      const response = {
         message: "Bed successfully allocated",
         bed: existingBed,
         customer: newCustomer,
-      });
+        invoice: {
+          file: pdfBuffer.toString("base64"), // Base64 encode the PDF
+          filename: `${newCustomer.name}-${new Date().getTime()}.pdf`,
+        },
+      };
+
+      res.setHeader("Content-Disposition", "attachment; filename=invoice.pdf");
+      res.setHeader("Content-Type", "application/pdf");
+
+      return res.status(200).json(response);
     } catch (error) {
       console.error("Error allocating bed:", error);
       return res.status(500).json({ message: "Something went wrong", error });

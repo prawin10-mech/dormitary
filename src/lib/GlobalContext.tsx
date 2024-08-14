@@ -122,7 +122,13 @@ interface GlobalContextType {
     aadhar: FileList;
     bed: string;
     photo: FileList;
-  }) => Promise<{ bed: any; customer: any; error?: string }>;
+  }) => Promise<{
+    bed: any;
+    customer: any;
+    error?: string;
+    blob: Blob | MediaSource;
+    filename: string;
+  }>;
   getBeds: () => Promise<{ beds: any[]; error?: string }>;
   beds: any;
 }
@@ -169,8 +175,12 @@ export function GlobalContextProvider({
           },
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
+      if (error.response.status === 401) {
+        Cookies.remove("accessToken");
+        router.push("/login");
+      }
       dispatch({
         type: "INITIAL",
         payload: {
@@ -202,6 +212,10 @@ export function GlobalContextProvider({
 
         return { admin, token };
       } catch (error: any) {
+        if (error.response.status === 401) {
+          Cookies.remove("accessToken");
+          router.push("/login");
+        }
         throw new Error(
           error.response.data.message || "Login failed. Please try again."
         );
@@ -226,7 +240,11 @@ export function GlobalContextProvider({
         const { admin } = data;
 
         return { admin };
-      } catch (error) {
+      } catch (error: any) {
+        if (error.response.status === 401) {
+          Cookies.remove("accessToken");
+          router.push("/login");
+        }
         return { admin: null, error: "Registration failed. Please try again." };
       }
     },
@@ -257,7 +275,11 @@ export function GlobalContextProvider({
       });
 
       return { beds };
-    } catch (error) {
+    } catch (error: any) {
+      if (error.response.status === 401) {
+        Cookies.remove("accessToken");
+        router.push("/login");
+      }
       return { beds: [], error: "Failed to fetch beds. Please try again." };
     }
   }, []);
@@ -278,7 +300,11 @@ export function GlobalContextProvider({
       });
 
       return { customer };
-    } catch (error) {
+    } catch (error: any) {
+      if (error.response.status === 401) {
+        Cookies.remove("accessToken");
+        router.push("/login");
+      }
       return {
         customer: null,
         error: "Failed to fetch beds. Please try again.",
@@ -319,15 +345,29 @@ export function GlobalContextProvider({
           }
         );
 
-        const { bed, customer } = data;
+        const { invoice, bed, customer } = data;
 
         dispatch({
           type: "ALLOCATE_BED",
           payload: { bed, customer },
         });
 
-        return { bed, customer };
+        const byteCharacters = atob(invoice.file);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+
+        // Create Blob
+        const blob = new Blob([byteArray], { type: "application/pdf" });
+
+        return { bed, customer, blob, filename: invoice.filename };
       } catch (error: any) {
+        if (error.response.status === 401) {
+          Cookies.remove("accessToken");
+          router.push("/login");
+        }
         throw new Error(error.response.data.message || "Something went wrong");
       }
     },

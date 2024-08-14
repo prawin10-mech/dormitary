@@ -24,8 +24,9 @@ export default async function authentication(
   } catch (error) {
     // console.log(error);
     if (error instanceof JsonWebTokenError) {
-      if (error.message === "jwt expired")
+      if (error.message === "jwt expired") {
         return res.status(401).json({ code: "jwt expired" });
+      }
       if (error.message === "jwt malformed")
         return res.status(401).json({ code: "jwt malformed" });
 
