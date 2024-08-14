@@ -19,7 +19,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={inter.className}>
         <GlobalContextProvider>
-          <div className="main scrollbar-hide">{children}</div>
+          <div className="main">{children}</div>
         </GlobalContextProvider>
       </body>
     </html>
