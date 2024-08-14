@@ -8,6 +8,7 @@ import { Types } from "mongoose";
 import dotenv from "dotenv";
 import dayjs from "dayjs";
 import AgendaHelper from "../functions/agenda_helper";
+import { sendWhatsappMessage } from "../functions/sendWhatsAppMessage";
 
 dotenv.config();
 
@@ -92,6 +93,12 @@ export const AllocateBed = [
 
       AgendaHelper.scheduleEndBedPeriod(existingBed._id.toString(), endDate);
 
+      const message = await sendWhatsappMessage(
+        number,
+        `Your Bed ${bed} was allocated successfully Enjoy our services uninterrupted for the next 24 hours. Thank You`
+      );
+      console.log(message);
+
       return res.status(200).json({
         message: "Bed successfully allocated",
         bed: existingBed,
@@ -103,3 +110,20 @@ export const AllocateBed = [
     }
   },
 ];
+
+export const getCustomerDetails = async (req: Request, res: Response) => {
+  try {
+    const { number } = req.params;
+    const customer = await customerModel.findOne({ number });
+
+    if (!customer) {
+      return res.status(400).json({ message: "Customer not found" });
+    }
+
+    return res
+      .status(200)
+      .json({ message: "Details fetched successfully", customer });
+  } catch (error: any) {
+    return res.status(500).json({ message: "Something went wrong", error });
+  }
+};

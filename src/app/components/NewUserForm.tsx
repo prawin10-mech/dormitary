@@ -2,10 +2,8 @@
 
 import React from "react";
 import { useForm, SubmitHandler, Resolver, FieldErrors } from "react-hook-form";
-import { BedTypes } from "../../../server/utils/BedTypes";
 import { useGlobalContext } from "@/lib/useGlobalContext";
 import toast, { ToastBar, Toaster } from "react-hot-toast";
-import { IBed } from "../../../server/models/bed.model";
 
 interface IFormInput {
   name: string;
@@ -38,12 +36,7 @@ const resolver: Resolver<IFormInput> = async (values) => {
       message: "Customer Number is required.",
     };
   }
-  if (!values.email) {
-    errors.email = {
-      type: "required",
-      message: "Customer Email is required.",
-    };
-  } else if (!/^\S+@\S+$/i.test(values.email)) {
+  if (values.email && !/^\S+@\S+$/i.test(values.email)) {
     errors.email = {
       type: "pattern",
       message: "Invalid email address.",
@@ -75,11 +68,14 @@ const resolver: Resolver<IFormInput> = async (values) => {
 };
 
 const Form = () => {
-  const { allocateBed, getBeds, beds } = useGlobalContext();
+  const { allocateBed, getBeds, beds, getCustomerDetails, customer } =
+    useGlobalContext();
   const {
     register,
     handleSubmit,
     formState: { errors },
+    reset,
+    setValue,
   } = useForm<IFormInput>({ resolver });
 
   const onSubmit: SubmitHandler<IFormInput> = (values) => {
@@ -105,14 +101,49 @@ const Form = () => {
           },
         }
       )
-      .then(() => getBeds())
+      .then(() => {
+        getBeds();
+        reset();
+      })
       .catch((err) => {
         console.log(err);
       });
   };
 
+  const handleNumberChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    try {
+      const number = e.target.value;
+      if (number.length === 10) {
+        const { customer } = await getCustomerDetails(number);
+
+        if (customer) {
+          setValue("name", customer.name);
+          setValue("email", customer.email || "");
+          setValue("age", customer.age);
+
+          console.log(customer);
+        }
+      }
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Failed to get users data");
+    }
+  };
+
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      <div>
+        <label className="block text-gray-700">Customer Number</label>
+        <input
+          type="text"
+          {...register("number")}
+          placeholder="Enter customer number"
+          onChange={handleNumberChange}
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+        />
+        {errors.number && (
+          <span className="text-red-600">{errors.number.message}</span>
+        )}
+      </div>
       <div>
         <label className="block text-gray-700">Customer Name</label>
         <input
@@ -131,6 +162,9 @@ const Form = () => {
           {...register("bed")}
           className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition ease-in-out duration-150"
         >
+          <option value="" disabled>
+            Select a Bed
+          </option>
           {beds.map((bed: any) => (
             <option
               key={bed._id}
@@ -148,18 +182,7 @@ const Form = () => {
           </span>
         )}
       </div>
-      <div>
-        <label className="block text-gray-700">Customer Number</label>
-        <input
-          type="text"
-          {...register("number")}
-          placeholder="Enter customer number"
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-        />
-        {errors.number && (
-          <span className="text-red-600">{errors.number.message}</span>
-        )}
-      </div>
+
       <div>
         <label className="block text-gray-700">Customer Email</label>
         <input
