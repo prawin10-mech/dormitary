@@ -108,6 +108,9 @@ export default function History() {
                                             <thead className="bg-gray-50">
                                               <tr>
                                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                  S. No
+                                                </th>
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                   Name
                                                 </th>
                                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -123,22 +126,27 @@ export default function History() {
                                               </tr>
                                             </thead>
                                             <tbody className="bg-white divide-y divide-gray-200">
-                                              {selectedDayData.map((record) => (
-                                                <tr key={record.bed._id}>
-                                                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                                    {record.name}
-                                                  </td>
-                                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                    {record.phone}
-                                                  </td>
-                                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                    {record.bed.bed}
-                                                  </td>
-                                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                    {record.bed.type}
-                                                  </td>
-                                                </tr>
-                                              ))}
+                                              {selectedDayData.map(
+                                                (record, index) => (
+                                                  <tr key={record.bed._id}>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                                      {index + 1}
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                                      {record.name}
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                      {record.phone}
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                      {record.bed.bed}
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                      {record.bed.type}
+                                                    </td>
+                                                  </tr>
+                                                )
+                                              )}
                                             </tbody>
                                           </table>
                                         </div>
