@@ -1,5 +1,6 @@
 import React, { useRef, useEffect } from "react";
 import Link from "next/link";
+import TransitionLink from "../TransitionLink";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -46,10 +47,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
       <nav className="p-4">
         <ul>
           <li className="mb-2">
-            <Link href="/">Home</Link>
+            <TransitionLink href="/" label="Home" />
           </li>
           <li>
-            <Link href="/history">History</Link>
+            <TransitionLink href="/history" label="History" />
           </li>
         </ul>
       </nav>
