@@ -14,10 +14,13 @@ import { IAdmin } from "../../server/models/admin.model";
 import localStorageAvailable from "./useLocalStorageAvailable";
 import { isValidToken, setSession } from "./utils";
 import { useRouter } from "next/navigation";
+import { ICustomer } from "../../server/models/customer.model";
 
 interface State {
   beds: any[];
   admin: IAdmin | null;
+  history: any | null;
+  customer: ICustomer | null;
   isAuthenticated: boolean;
 }
 
@@ -29,11 +32,15 @@ type Action =
       payload: { isAuthenticated: boolean; admin: IAdmin | null };
     }
   | { type: "ALLOCATE_BED"; payload: { bed: any; customer: any } }
-  | { type: "GET_BEDS"; payload: { beds: any[] } };
+  | { type: "GET_BEDS"; payload: { beds: any[] } }
+  | { type: "GET_CUSTOMER_DETAILS"; payload: { customer: ICustomer | null } }
+  | { type: "GET_BEDS_HISTORY"; payload: { history: any | null } };
 
 const initialState: State = {
   admin: null,
   beds: [],
+  history: null,
+  customer: null,
   isAuthenticated: false,
 };
 
@@ -67,6 +74,16 @@ const reducer = (state: State, action: Action): State => {
         ...state,
         beds: action.payload.beds,
       };
+    case "GET_CUSTOMER_DETAILS":
+      return {
+        ...state,
+        customer: action.payload.customer,
+      };
+    case "GET_BEDS_HISTORY":
+      return {
+        ...state,
+        history: action.payload.history,
+      };
     default:
       return state;
   }
@@ -76,6 +93,16 @@ interface GlobalContextType {
   admin: IAdmin | null;
   isAuthenticated: boolean;
   initialize: () => Promise<void>;
+  customer: ICustomer | null;
+  getBedHistory: () => Promise<{
+    history: any | null;
+    error?: string;
+  }>;
+  history: any;
+  getCustomerDetails: (number: string) => Promise<{
+    customer: (ICustomer & { _id: string }) | null;
+    error?: string;
+  }>;
   adminLogin: (body: {
     email: string;
     password: string;
@@ -174,8 +201,10 @@ export function GlobalContextProvider({
         });
 
         return { admin, token };
-      } catch (error) {
-        return { admin: null, error: "Login failed. Please try again." };
+      } catch (error: any) {
+        throw new Error(
+          error.response.data.message || "Login failed. Please try again."
+        );
       }
     },
     [router]
@@ -233,6 +262,30 @@ export function GlobalContextProvider({
     }
   }, []);
 
+  const getCustomerDetails = useCallback(async (number: string) => {
+    try {
+      let accessToken = storageAvailable ? Cookies.get("accessToken") : "";
+      const { data } = await axios.get(
+        `${process.env.NEXT_PUBLIC_BASE_URL}/customer/customer_details/${number}`,
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+      );
+
+      const { customer } = data;
+
+      dispatch({
+        type: "GET_CUSTOMER_DETAILS",
+        payload: { customer },
+      });
+
+      return { customer };
+    } catch (error) {
+      return {
+        customer: null,
+        error: "Failed to fetch beds. Please try again.",
+      };
+    }
+  }, []);
+
   const allocateBed = useCallback(
     async (body: {
       name: string;
@@ -276,15 +329,34 @@ export function GlobalContextProvider({
         return { bed, customer };
       } catch (error: any) {
         throw new Error(error.response.data.message || "Something went wrong");
-        // return {
-        //   bed: null,
-        //   customer: null,
-        //   error: "Failed to allocate bed. Please try again.",
-        // };
       }
     },
-    []
+    [storageAvailable]
   );
+
+  const getBedHistory = useCallback(async () => {
+    try {
+      let accessToken = storageAvailable ? Cookies.get("accessToken") : "";
+      const { data } = await axios.get(
+        `${process.env.NEXT_PUBLIC_BASE_URL}/beds/get_beds_history`,
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+      );
+
+      const { history } = data;
+
+      dispatch({
+        type: "GET_BEDS_HISTORY",
+        payload: { history },
+      });
+
+      return { history };
+    } catch (error: any) {
+      throw new Error(
+        error.response.data.message ||
+          "Failed to fetch history. Please try again."
+      );
+    }
+  }, []);
 
   useEffect(() => {
     initialize();
@@ -300,11 +372,15 @@ export function GlobalContextProvider({
       adminLogout,
 
       // customers
+      customer: state.customer,
       allocateBed,
+      getCustomerDetails,
 
       // beds
       beds: state.beds,
       getBeds,
+      history: state.history,
+      getBedHistory,
     }),
     [
       state.admin,
@@ -316,6 +392,10 @@ export function GlobalContextProvider({
       state.beds,
       allocateBed,
       getBeds,
+      getCustomerDetails,
+      state.customer,
+      state.history,
+      getBedHistory,
     ]
   );
 
