@@ -116,6 +116,10 @@ export default function History() {
                                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                   Bed
                                                 </th>
+
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                  Type
+                                                </th>
                                               </tr>
                                             </thead>
                                             <tbody className="bg-white divide-y divide-gray-200">
@@ -129,6 +133,9 @@ export default function History() {
                                                   </td>
                                                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                                     {record.bed.bed}
+                                                  </td>
+                                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                    {record.bed.type}
                                                   </td>
                                                 </tr>
                                               ))}
