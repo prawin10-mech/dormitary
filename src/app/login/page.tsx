@@ -18,7 +18,7 @@ const LoginSchema = z.object({
 type LoginFormInput = z.infer<typeof LoginSchema>;
 
 export default function Login() {
-  const { adminLogin } = useGlobalContext();
+  const { adminLogin, initialize } = useGlobalContext();
 
   const defaultValues = {
     email: "",
@@ -35,23 +35,27 @@ export default function Login() {
   });
 
   const onSubmit: SubmitHandler<LoginFormInput> = async (values) => {
-    toast.promise(
-      adminLogin(values),
-      {
-        loading: "Loading",
-        success: () => `Logged In Successfully`,
-        error: (err) => `This just happened: ${err.toString()}`,
-      },
-      {
-        style: {
-          minWidth: "250px",
+    toast
+      .promise(
+        adminLogin(values),
+        {
+          loading: "Loading",
+          success: () => `Logged In Successfully`,
+          error: (err) => `This just happened: ${err.toString()}`,
         },
-        success: {
-          duration: 5000,
-          icon: "🔥",
-        },
-      }
-    );
+        {
+          style: {
+            minWidth: "250px",
+          },
+          success: {
+            duration: 5000,
+            icon: "🔥",
+          },
+        }
+      )
+      .then(() => {
+        initialize();
+      });
   };
 
   return (
