@@ -1,11 +1,11 @@
-export const getHtmlContent = (invoice: any): string => {
+export const getCheckoutHtmlContent = (invoice: any): string => {
   return `
     <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Invoice</title>
+  <title>Checkout Slip</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <style>
     /* Add additional custom styles here if needed */
@@ -30,7 +30,7 @@ export const getHtmlContent = (invoice: any): string => {
     </h1>
   </header>
   <main class="mt-3">
-    <h1 class="text-3xl font-bold mb-6 text-center">Invoice</h1>
+    <h1 class="text-3xl font-bold mb-6 text-center">Checkout Slip</h1>
     <div class="bg-white shadow-md rounded-lg p-6">
       <div class="flex lg:flex-row justify-between mb-6">
         <div class="mb-3 lg:mb-0">
@@ -39,19 +39,24 @@ export const getHtmlContent = (invoice: any): string => {
           <p>Phone: ${invoice.invoiceFrom.phone}</p>
         </div>
         <div class="mb-4 lg:mb-0">
-          <p class="text-sm text-gray-500 font-medium">Invoice to</p>
+          <p class="text-sm text-gray-500 font-medium">Invoice by</p>
           <p class="text-lg font-semibold">${invoice.invoiceTo.name}</p>
           <p>Phone: ${invoice.invoiceTo.phone}</p>
         </div>
-        
       </div>
-      <div>
-          <p class="text-sm text-gray-500 font-medium">Checked In</p>
-          <p class="text-lg">${invoice.createDate}</p>
+      <div class="flex justify-between">
+        <div>
+            <p class="text-sm text-gray-500 font-medium">Check in</p>
+            <p class="text-lg">${invoice.createDate}</p>
         </div>
+        <div>
+            <p class="text-sm text-gray-500 font-medium">Check out</p>
+            <p class="text-lg">${invoice.checkoutDate}</p>
+        </div>
+      </div>
       <div class="bg-gray-100 p-4 rounded-lg mb-6">
         <div class="flex justify-between items-center">
-          <h2 class="text-xl font-semibold text-gray-800">Invoice Number: INV-${
+          <h2 class="text-xl font-semibold text-gray-800">Invoice Number: INV-CHK-${
             invoice.invoiceNumber
           }</h2>
           <span class="inline-block text-xs font-medium uppercase px-3 py-1 rounded ${
@@ -101,28 +106,17 @@ export const getHtmlContent = (invoice: any): string => {
             </tr>
             <tr class="bg-gray-50">
               <td colSpan="3"></td>
+              <td class="py-2 px-4 text-right font-medium">Advance Payment</td>
+              <td class="py-2 px-4 text-right text-green-600">100.00</td>
+            </tr>
+            <tr class="bg-gray-50">
+              <td colSpan="3"></td>
               <td class="py-2 px-4 text-right font-medium">Subtotal</td>
               <td class="py-2 px-4 text-right">${invoice.subTotalPrice.toFixed(
                 2
               )}</td>
             </tr>
-            <tr class="bg-gray-50">
-              <td colSpan="3"></td>
-              <td class="py-2 px-4 text-right font-medium">Discount</td>
-              <td class="py-2 px-4 text-right text-red-600">${
-                invoice.discount && -invoice.discount.toFixed(2)
-              }</td>
-            </tr>
-            <tr class="bg-gray-50">
-              <td colSpan="3"></td>
-              <td class="py-2 px-4 text-right font-medium">Taxes</td>
-              <td class="py-2 px-4 text-right">${invoice.taxes.toFixed(2)}</td>
-            </tr>
-             <tr class="bg-gray-50">
-              <td colSpan="3"></td>
-              <td class="py-2 px-4 text-right font-medium">Advance Payment</td>
-              <td class="py-2 px-4 text-right text-green-600">100.00</td>
-            </tr>
+        
             <tr class="bg-gray-50">
               <td colSpan="3"></td>
               <td class="py-2 px-4 text-right text-lg font-semibold">Total</td>
@@ -130,7 +124,21 @@ export const getHtmlContent = (invoice: any): string => {
                 2
               )}</td>
             </tr>
-           
+            
+             <tr class="bg-gray-50">
+              <td colSpan="3"></td>
+              <td class="py-2 px-4 text-right font-medium">Advance Return</td>
+              <td class="py-2 px-4 text-right text-lg text-red-600 font-semibold">${(100).toFixed(
+                2
+              )}</td>
+            </tr>
+            <tr class="bg-gray-50">
+              <td colSpan="3"></td>
+              <td class="py-2 px-4 text-right font-medium">Amount Due</td>
+              <td class="py-2 px-4 text-right text-lg font-semibold">${(0).toFixed(
+                2
+              )}</td>
+            </tr>
           </tbody>
         </table>
       </div>
@@ -150,6 +158,5 @@ export const getHtmlContent = (invoice: any): string => {
   </main>
 </body>
 </html>
-
   `;
 };

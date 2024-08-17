@@ -32,6 +32,7 @@ type Action =
       payload: { isAuthenticated: boolean; admin: IAdmin | null };
     }
   | { type: "ALLOCATE_BED"; payload: { bed: any; customer: any } }
+  | { type: "CHECKOUT_BED"; payload: { bed: any; customer: any } }
   | { type: "GET_BEDS"; payload: { beds: any[] } }
   | { type: "GET_CUSTOMER_DETAILS"; payload: { customer: ICustomer | null } }
   | { type: "GET_BEDS_HISTORY"; payload: { history: any | null } };
@@ -69,6 +70,12 @@ const reducer = (state: State, action: Action): State => {
         ...state,
         beds: [...state.beds, action.payload.bed],
       };
+
+    case "CHECKOUT_BED":
+      return {
+        ...state,
+        beds: [...state.beds, action.payload.bed],
+      };
     case "GET_BEDS":
       return {
         ...state,
@@ -100,8 +107,20 @@ interface GlobalContextType {
   }>;
   history: any;
   getCustomerDetails: (number: string) => Promise<{
-    customer: (ICustomer & { _id: string }) | null;
+    customer:
+      | (ICustomer & { _id: string })
+      | null
+      | ((ICustomer & { _id: string }) & { bed: any });
     error?: string;
+  }>;
+  checkOutBed: (bedId: string) => Promise<{
+    customer:
+      | (ICustomer & { _id: string })
+      | null
+      | ((ICustomer & { _id: string }) & { bed: any });
+    error?: string;
+    blob: Blob | MediaSource;
+    filename: string;
   }>;
   adminLogin: (body: {
     email: string;
@@ -374,6 +393,50 @@ export function GlobalContextProvider({
     [storageAvailable]
   );
 
+  const checkOutBed = useCallback(
+    async (bedId: string) => {
+      try {
+        let accessToken = storageAvailable ? Cookies.get("accessToken") : "";
+
+        const { data } = await axios.get(
+          `${process.env.NEXT_PUBLIC_BASE_URL}/beds/checkout/${bedId}`,
+
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+          }
+        );
+
+        const { invoice, bed, customer } = data;
+
+        dispatch({
+          type: "CHECKOUT_BED",
+          payload: { bed, customer },
+        });
+
+        const byteCharacters = atob(invoice.file);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+
+        // Create Blob
+        const blob = new Blob([byteArray], { type: "application/pdf" });
+
+        return { bed, customer, blob, filename: invoice.filename };
+      } catch (error: any) {
+        if (error.response.status === 401) {
+          Cookies.remove("accessToken");
+          router.push("/login");
+        }
+        throw new Error(error.response.data.message || "Something went wrong");
+      }
+    },
+    [storageAvailable]
+  );
+
   const getBedHistory = useCallback(async () => {
     try {
       let accessToken = storageAvailable ? Cookies.get("accessToken") : "";
@@ -421,6 +484,7 @@ export function GlobalContextProvider({
       getBeds,
       history: state.history,
       getBedHistory,
+      checkOutBed,
     }),
     [
       state.admin,
@@ -436,6 +500,7 @@ export function GlobalContextProvider({
       state.customer,
       state.history,
       getBedHistory,
+      checkOutBed,
     ]
   );
 

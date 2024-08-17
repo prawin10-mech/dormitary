@@ -1,10 +1,20 @@
 import BedModel, { IBed } from "../models/bed.model";
+import { ICustomer } from "../models/customer.model";
 
 export async function endBedPeriod(bedId: string) {
   try {
-    const bed: IBed | null = await BedModel.findById(bedId);
+    const bed: IBed | null = await BedModel.findById(bedId).populate(
+      "customer"
+    );
 
     if (!bed) return;
+
+    const customer = bed.customer as ICustomer | undefined;
+
+    if (customer) {
+      customer.checkOutAt = new Date();
+      await customer.save();
+    }
 
     if (bed) {
       bed.isOccupied = false;
