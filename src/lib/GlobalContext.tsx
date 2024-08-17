@@ -178,14 +178,17 @@ export function GlobalContextProvider({
           { headers: { Authorization: `Bearer ${accessToken}` } }
         );
 
+        const { admin } = data;
+
         dispatch({
           type: "INITIAL",
           payload: {
-            isAuthenticated: !!data,
-            admin: data || null,
+            isAuthenticated: !!admin,
+            admin: admin,
           },
         });
       } else {
+        console.log("Else");
         dispatch({
           type: "INITIAL",
           payload: {
