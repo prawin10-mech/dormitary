@@ -10,6 +10,7 @@ export interface ICustomer extends Document {
   bed: Types.ObjectId;
   createdAt?: Date;
   updatedAt?: Date;
+  checkOutAt?: Date;
 }
 
 const schema = new Schema<ICustomer, Model<ICustomer>>(
@@ -20,6 +21,7 @@ const schema = new Schema<ICustomer, Model<ICustomer>>(
     age: { type: Number, required: [true, "Age is Required"] },
     photo: { type: String, required: [true, "Photo is Required"] },
     aadhar: { type: String, required: [true, "Aadhar is Required"] },
+    checkOutAt: { type: Date },
     bed: {
       type: Schema.Types.ObjectId,
       required: [true, "Bed is Required"],

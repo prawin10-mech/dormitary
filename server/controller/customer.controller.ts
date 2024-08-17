@@ -107,24 +107,24 @@ export const AllocateBed = [
           title: existingBed.type === "A/C" ? "AC BED" : "Regular Bed",
           description: `BED ${existingBed.bed}(${existingBed.type})`,
           quantity: 1,
-          price: existingBed.type === "A/C" ? 200 : 100,
+          price: 200,
         },
         status: "paid",
-        dueDate: date.format("DD MMMM, YYYY"),
+        dueDate: date.format("DD-MM-YYYY hh:mm::ss"),
         invoiceTo: {
           name: newCustomer.name,
           address: "",
           phone: newCustomer.number,
         },
-        createDate: date.format("DD MMMM, YYYY"),
+        createDate: date.format("DD-MM-YYYY hh:mm::ss"),
+
         invoiceFrom: {
-          name: "Murali Ande",
-          address: "Sri vijayalakshmi A/C Dormitary, Tanuku, 534210",
+          name: "Sri vijayalakshmi A/C Dormitary, Tanuku, 534210",
           phone: "9876543210",
         },
         invoiceNumber: customersCount,
-        subTotalPrice: existingBed.type === "A/C" ? 200 : 100,
-        totalPrice: existingBed.type === "A/C" ? 200 : 100,
+        subTotalPrice: 200,
+        totalPrice: 300,
         discount: 0.0,
         taxes: 0.0,
       };
@@ -138,7 +138,7 @@ export const AllocateBed = [
         customer: newCustomer,
         invoice: {
           file: pdfBuffer.toString("base64"), // Base64 encode the PDF
-          filename: `${newCustomer.name}-${new Date().getTime()}.pdf`,
+          filename: `${newCustomer.name}-checkin-${new Date().getTime()}.pdf`,
         },
       };
 
@@ -156,7 +156,7 @@ export const AllocateBed = [
 export const getCustomerDetails = async (req: Request, res: Response) => {
   try {
     const { number } = req.params;
-    const customer = await customerModel.findOne({ number });
+    const customer = await customerModel.findOne({ number }).populate("bed");
 
     if (!customer) {
       return res.status(400).json({ message: "Customer not found" });

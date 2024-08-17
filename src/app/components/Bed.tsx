@@ -13,6 +13,7 @@ interface IBeds {
   endsIn: Date;
   type?: string;
   bed: {
+    _id: string;
     bed: string;
     type: string;
     isOccupied: boolean;

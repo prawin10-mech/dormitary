@@ -3,14 +3,18 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
 import Image from "next/image";
+import toast from "react-hot-toast";
+import { useGlobalContext } from "@/lib/useGlobalContext";
 
 interface IUserCard {
   bed: {
+    _id: string;
     bed: string;
     type: string;
     isOccupied: boolean;
@@ -28,6 +32,7 @@ interface IUserCard {
 }
 
 export default function UserCard({ bed, children }: IUserCard) {
+  const { checkOutBed, getBeds } = useGlobalContext();
   if (!bed) {
     return (
       <div className="text-center text-gray-500">
@@ -35,6 +40,43 @@ export default function UserCard({ bed, children }: IUserCard) {
       </div>
     );
   }
+
+  const handleCheckout = async () => {
+    toast
+      .promise(
+        checkOutBed(bed._id),
+        {
+          loading: "Checking bed Please wait",
+          success: () => `Bed Checked out`,
+          error: (err) => `${err.toString()}`,
+        },
+        {
+          style: {
+            minWidth: "250px",
+          },
+          success: {
+            duration: 5000,
+            icon: "🔥",
+          },
+          error: {
+            duration: 5000,
+            icon: "🛑",
+          },
+        }
+      )
+      .then(({ blob, filename }) => {
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.setAttribute("download", filename);
+        document.body.appendChild(link);
+        link.click();
+        getBeds();
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  };
 
   return (
     <Dialog>
@@ -121,6 +163,9 @@ export default function UserCard({ bed, children }: IUserCard) {
             </div>
           </DialogDescription>
         </DialogHeader>
+        <DialogFooter>
+          {bed.isOccupied && <button onClick={handleCheckout}>Checkout</button>}
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

@@ -36,19 +36,17 @@ export const getHtmlContent = (invoice: any): string => {
         <div class="mb-3 lg:mb-0">
           <p class="text-sm text-gray-500 font-medium">Invoice from</p>
           <p class="text-lg font-semibold">${invoice.invoiceFrom.name}</p>
-          <p>${invoice.invoiceFrom.address}</p>
           <p>Phone: ${invoice.invoiceFrom.phone}</p>
         </div>
         <div class="mb-4 lg:mb-0">
           <p class="text-sm text-gray-500 font-medium">Invoice to</p>
           <p class="text-lg font-semibold">${invoice.invoiceTo.name}</p>
-          <p>${invoice.invoiceTo.address}</p>
           <p>Phone: ${invoice.invoiceTo.phone}</p>
         </div>
         
       </div>
       <div>
-          <p class="text-sm text-gray-500 font-medium">Date created</p>
+          <p class="text-sm text-gray-500 font-medium">Checked In</p>
           <p class="text-lg">${invoice.createDate}</p>
         </div>
       <div class="bg-gray-100 p-4 rounded-lg mb-6">
@@ -120,6 +118,11 @@ export const getHtmlContent = (invoice: any): string => {
               <td class="py-2 px-4 text-right font-medium">Taxes</td>
               <td class="py-2 px-4 text-right">${invoice.taxes.toFixed(2)}</td>
             </tr>
+             <tr class="bg-gray-50">
+              <td colSpan="3"></td>
+              <td class="py-2 px-4 text-right font-medium">Advance Payment</td>
+              <td class="py-2 px-4 text-right text-green-600">100.00</td>
+            </tr>
             <tr class="bg-gray-50">
               <td colSpan="3"></td>
               <td class="py-2 px-4 text-right text-lg font-semibold">Total</td>
@@ -127,6 +130,7 @@ export const getHtmlContent = (invoice: any): string => {
                 2
               )}</td>
             </tr>
+           
           </tbody>
         </table>
       </div>

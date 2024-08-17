@@ -1,9 +1,10 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { useForm, SubmitHandler, Resolver, FieldErrors } from "react-hook-form";
 import { useGlobalContext } from "@/lib/useGlobalContext";
 import toast, { ToastBar, Toaster } from "react-hot-toast";
+import Image from "next/image";
 
 interface IFormInput {
   name: string;
@@ -78,6 +79,14 @@ const Form = () => {
     setValue,
   } = useForm<IFormInput>({ resolver });
 
+  const [imagePreview, setImagePreview] = useState<string | ArrayBuffer | null>(
+    null
+  );
+
+  const [aadharPreview, setAadharPreview] = useState<
+    string | ArrayBuffer | null
+  >(null);
+
   const onSubmit: SubmitHandler<IFormInput> = (values) => {
     toast
       .promise(
@@ -109,6 +118,8 @@ const Form = () => {
         document.body.appendChild(link);
         link.click();
         getBeds();
+        setAadharPreview(null);
+        setImagePreview(null);
         reset();
       })
       .catch((err) => {
@@ -126,12 +137,54 @@ const Form = () => {
           setValue("name", customer.name);
           setValue("email", customer.email || "");
           setValue("age", customer.age);
+          setValue("bed", customer.bed.bed);
+
+          if (customer.photo) {
+            const photoBlob = await fetch(customer.photo).then((res) =>
+              res.blob()
+            );
+            const photoFile = new File([photoBlob], "photo.jpg", {
+              type: photoBlob.type,
+            });
+            setValue("photo", [photoFile] as unknown as FileList);
+            setImagePreview(URL.createObjectURL(photoBlob));
+          }
+
+          // Fetch and set aadhar preview
+          if (customer.aadhar) {
+            const aadharBlob = await fetch(customer.aadhar).then((res) =>
+              res.blob()
+            );
+            const aadharFile = new File([aadharBlob], "aadhar.jpg", {
+              type: aadharBlob.type,
+            });
+            setValue("aadhar", [aadharFile] as unknown as FileList);
+            setAadharPreview(URL.createObjectURL(aadharBlob));
+          }
 
           console.log(customer);
         }
       }
     } catch (error: any) {
-      toast.error(error.response?.data?.message || "Failed to get users data");
+      toast.error(error.response?.data?.message || "Failed to get user data");
+    }
+  };
+
+  const onFileChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    type: String
+  ) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        if (type === "Photo") {
+          setImagePreview(reader.result);
+        } else if (type === "Aadhar") {
+          setAadharPreview(reader.result);
+        }
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -221,9 +274,22 @@ const Form = () => {
           accept="image/*"
           capture="environment"
           className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+          onChange={(e) => onFileChange(e, "Photo")}
         />
         {errors.photo && (
           <span className="text-red-600">{errors.photo.message}</span>
+        )}
+
+        {imagePreview && (
+          <div className="mt-4">
+            <Image
+              src={imagePreview as string}
+              alt="Preview"
+              width={200}
+              height={100}
+              className="w-full max-w-xs object-cover border border-gray-300 rounded-lg"
+            />
+          </div>
         )}
       </div>
       <div>
@@ -235,9 +301,21 @@ const Form = () => {
           {...register("aadhar")}
           placeholder="Aadhar"
           className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+          onChange={(e) => onFileChange(e, "Aadhar")}
         />
         {errors.aadhar && (
           <span className="text-red-600">{errors.aadhar.message}</span>
+        )}
+        {aadharPreview && (
+          <div className="mt-4">
+            <Image
+              src={aadharPreview as string}
+              alt="Preview"
+              width={200}
+              height={100}
+              className="w-full max-w-xs object-cover border border-gray-300 rounded-lg"
+            />
+          </div>
         )}
       </div>
       <button
