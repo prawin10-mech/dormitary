@@ -142,6 +142,7 @@ interface GlobalContextType {
     aadharBack: FileList;
     bed: string;
     photo: FileList;
+    period: string;
   }) => Promise<{
     bed: any;
     customer: any;
@@ -344,6 +345,7 @@ export function GlobalContextProvider({
       aadharBack: FileList;
       bed: string;
       photo: FileList;
+      period: string;
     }) => {
       try {
         const formData = new FormData();
@@ -354,6 +356,7 @@ export function GlobalContextProvider({
         formData.append("aadharFront", body.aadharFront[0]);
         formData.append("aadharBack", body.aadharBack[0]);
         formData.append("bed", body.bed);
+        formData.append("period", body.period);
         formData.append("photo", body.photo[0]);
 
         let accessToken = storageAvailable ? Cookies.get("accessToken") : "";
