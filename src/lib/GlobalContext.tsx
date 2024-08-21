@@ -138,7 +138,8 @@ interface GlobalContextType {
     email: string;
     number: string;
     age: number;
-    aadhar: FileList;
+    aadharFront: FileList;
+    aadharBack: FileList;
     bed: string;
     photo: FileList;
   }) => Promise<{
@@ -188,7 +189,6 @@ export function GlobalContextProvider({
           },
         });
       } else {
-        console.log("Else");
         dispatch({
           type: "INITIAL",
           payload: {
@@ -340,7 +340,8 @@ export function GlobalContextProvider({
       email: string;
       number: string;
       age: number;
-      aadhar: FileList;
+      aadharFront: FileList;
+      aadharBack: FileList;
       bed: string;
       photo: FileList;
     }) => {
@@ -350,7 +351,8 @@ export function GlobalContextProvider({
         formData.append("email", body.email);
         formData.append("number", body.number);
         formData.append("age", body.age.toString());
-        formData.append("aadhar", body.aadhar[0]);
+        formData.append("aadharFront", body.aadharFront[0]);
+        formData.append("aadharBack", body.aadharBack[0]);
         formData.append("bed", body.bed);
         formData.append("photo", body.photo[0]);
 
