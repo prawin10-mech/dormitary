@@ -17,6 +17,8 @@ export default function History() {
   const [selectedDayData, setSelectedDayData] = useState<
     HistoryRecord[] | null
   >(null);
+  const [dayTotal, setDayTotal] = useState<number | null>(null);
+  const [monthTotal, setMonthTotal] = useState<number | null>(null);
 
   useEffect(() => {
     getBedHistory();
@@ -32,21 +34,34 @@ export default function History() {
     setExpandedMonth(null);
     setSelectedDay(null);
     setSelectedDayData(null);
+    setMonthTotal(null);
   };
 
   const handleMonthClick = (month: number) => {
     setExpandedMonth(expandedMonth === month ? null : month);
     setSelectedDay(null);
     setSelectedDayData(null);
+    if (expandedMonth !== month) {
+      const days = history[expandedYear!][month];
+      const total = Object.values(days)
+        .flat()
+        .reduce((sum, record: HistoryRecord) => sum + 200, 0);
+      setMonthTotal(total);
+    } else {
+      setMonthTotal(null);
+    }
   };
 
   const handleDayClick = (day: number, records: HistoryRecord[]) => {
     if (selectedDay === day) {
       setSelectedDay(null);
       setSelectedDayData(null);
+      setDayTotal(null);
     } else {
       setSelectedDay(day);
       setSelectedDayData(records);
+      const total = records.reduce((sum, record) => sum + 200, 0);
+      setDayTotal(total);
     }
   };
 
@@ -123,6 +138,10 @@ export default function History() {
                                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                   Type
                                                 </th>
+
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                  Amount
+                                                </th>
                                               </tr>
                                             </thead>
                                             <tbody className="bg-white divide-y divide-gray-200">
@@ -144,17 +163,31 @@ export default function History() {
                                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                                       {record.bed.type}
                                                     </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                      200
+                                                    </td>
                                                   </tr>
                                                 )
                                               )}
                                             </tbody>
                                           </table>
+                                          <div className="p-4 text-right font-bold">
+                                            Total Amount for {day}-
+                                            {getMonthName(month)}-{year}: ₹
+                                            {dayTotal}
+                                          </div>
                                         </div>
                                       </div>
                                     )}
                                   </div>
                                 );
                               })}
+                              {monthTotal !== null && (
+                                <div className="p-4 text-right font-bold mt-4">
+                                  Total Amount for {getMonthName(month)}-{year}:
+                                  ₹{monthTotal}
+                                </div>
+                              )}
                             </div>
                           )}
                         </div>

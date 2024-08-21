@@ -12,7 +12,8 @@ interface IFormInput {
   email: string;
   age: number;
   photo: FileList;
-  aadhar: FileList;
+  aadharFront: FileList;
+  aadharBack: FileList;
   bed: string;
 }
 
@@ -55,10 +56,17 @@ const resolver: Resolver<IFormInput> = async (values) => {
       message: "Photo is required.",
     };
   }
-  if (!values.aadhar || values.aadhar.length === 0) {
-    errors.aadhar = {
+  if (!values.aadharFront || values.aadharFront.length === 0) {
+    errors.aadharFront = {
       type: "required",
-      message: "Aadhar is required.",
+      message: "Aadhar Front is required.",
+    };
+  }
+
+  if (!values.aadharBack || values.aadharBack.length === 0) {
+    errors.aadharBack = {
+      type: "required",
+      message: "Aadhar Back is required.",
     };
   }
 
@@ -83,7 +91,11 @@ const Form = () => {
     null
   );
 
-  const [aadharPreview, setAadharPreview] = useState<
+  const [aadharFrontPreview, setAadharFrontPreview] = useState<
+    string | ArrayBuffer | null
+  >(null);
+
+  const [aadharBackPreview, setAadharBackPreview] = useState<
     string | ArrayBuffer | null
   >(null);
 
@@ -118,7 +130,8 @@ const Form = () => {
         document.body.appendChild(link);
         link.click();
         getBeds();
-        setAadharPreview(null);
+        setAadharFrontPreview(null);
+        setAadharBackPreview(null);
         setImagePreview(null);
         reset();
       })
@@ -151,18 +164,27 @@ const Form = () => {
           }
 
           // Fetch and set aadhar preview
-          if (customer.aadhar) {
-            const aadharBlob = await fetch(customer.aadhar).then((res) =>
+          if (customer.aadharFront) {
+            const aadharBlob = await fetch(customer.aadharFront).then((res) =>
               res.blob()
             );
-            const aadharFile = new File([aadharBlob], "aadhar.jpg", {
+            const aadharFile = new File([aadharBlob], "aadhar_front.jpg", {
               type: aadharBlob.type,
             });
-            setValue("aadhar", [aadharFile] as unknown as FileList);
-            setAadharPreview(URL.createObjectURL(aadharBlob));
+            setValue("aadharFront", [aadharFile] as unknown as FileList);
+            setAadharFrontPreview(URL.createObjectURL(aadharBlob));
           }
 
-          console.log(customer);
+          if (customer.aadharBack) {
+            const aadharBlob = await fetch(customer.aadharBack).then((res) =>
+              res.blob()
+            );
+            const aadharFile = new File([aadharBlob], "aadhar_back.jpg", {
+              type: aadharBlob.type,
+            });
+            setValue("aadharBack", [aadharFile] as unknown as FileList);
+            setAadharBackPreview(URL.createObjectURL(aadharBlob));
+          }
         }
       }
     } catch (error: any) {
@@ -180,8 +202,10 @@ const Form = () => {
       reader.onloadend = () => {
         if (type === "Photo") {
           setImagePreview(reader.result);
-        } else if (type === "Aadhar") {
-          setAadharPreview(reader.result);
+        } else if (type === "aadharFront") {
+          setAadharFrontPreview(reader.result);
+        } else if (type === "aadharBack") {
+          setAadharBackPreview(reader.result);
         }
       };
       reader.readAsDataURL(file);
@@ -298,18 +322,45 @@ const Form = () => {
           type="file"
           accept="image/*"
           capture="environment"
-          {...register("aadhar")}
-          placeholder="Aadhar"
+          {...register("aadharFront")}
+          placeholder="Aadhar Front"
           className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-          onChange={(e) => onFileChange(e, "Aadhar")}
+          onChange={(e) => onFileChange(e, "aadharFront")}
         />
-        {errors.aadhar && (
-          <span className="text-red-600">{errors.aadhar.message}</span>
+        {errors.aadharFront && (
+          <span className="text-red-600">{errors.aadharFront.message}</span>
         )}
-        {aadharPreview && (
+        {aadharFrontPreview && (
           <div className="mt-4">
             <Image
-              src={aadharPreview as string}
+              src={aadharFrontPreview as string}
+              alt="Preview"
+              width={200}
+              height={100}
+              className="w-full max-w-xs object-cover border border-gray-300 rounded-lg"
+            />
+          </div>
+        )}
+      </div>
+
+      <div>
+        <label className="block text-gray-700">Aadhar Back</label>
+        <input
+          type="file"
+          accept="image/*"
+          capture="environment"
+          {...register("aadharBack")}
+          placeholder="aadharBack"
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+          onChange={(e) => onFileChange(e, "aadharBack")}
+        />
+        {errors.aadharBack && (
+          <span className="text-red-600">{errors.aadharBack.message}</span>
+        )}
+        {aadharBackPreview && (
+          <div className="mt-4">
+            <Image
+              src={aadharBackPreview as string}
               alt="Preview"
               width={200}
               height={100}

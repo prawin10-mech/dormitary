@@ -6,7 +6,8 @@ export interface ICustomer extends Document {
   number: string;
   age: number;
   photo: string;
-  aadhar: string;
+  aadharFront: string;
+  aadharBack: string;
   bed: Types.ObjectId;
   createdAt?: Date;
   updatedAt?: Date;
@@ -20,7 +21,8 @@ const schema = new Schema<ICustomer, Model<ICustomer>>(
     number: { type: String, required: [true, "Phone Number is Required"] },
     age: { type: Number, required: [true, "Age is Required"] },
     photo: { type: String, required: [true, "Photo is Required"] },
-    aadhar: { type: String, required: [true, "Aadhar is Required"] },
+    aadharFront: { type: String, required: [true, "Aadhar Front is Required"] },
+    aadharBack: { type: String, required: [true, "Aadhar Back is Required"] },
     checkOutAt: { type: Date },
     bed: {
       type: Schema.Types.ObjectId,

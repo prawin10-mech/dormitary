@@ -26,12 +26,14 @@ const storage = new CloudinaryStorage({
 
 const upload = multer({ storage }).fields([
   { name: "photo", maxCount: 1 },
-  { name: "aadhar", maxCount: 1 },
+  { name: "aadharFront", maxCount: 1 },
+  { name: "aadharBack", maxCount: 1 },
 ]);
 
 interface FileFields {
   photo?: Express.Multer.File[];
-  aadhar?: Express.Multer.File[];
+  aadharFront?: Express.Multer.File[];
+  aadharBack?: Express.Multer.File[];
 }
 
 export const AllocateBed = [
@@ -50,9 +52,10 @@ export const AllocateBed = [
       const { name, email, number, age, bed } = req.body;
       const files = req.files as FileFields;
       const photo = files.photo?.[0]?.path;
-      const aadhar = files.aadhar?.[0]?.path;
+      const aadharFront = files.aadharFront?.[0]?.path;
+      const aadharBack = files.aadharBack?.[0]?.path;
 
-      if (!photo || !aadhar) {
+      if (!photo || !aadharFront || !aadharBack) {
         return res
           .status(400)
           .json({ error: "Both photo and aadhar must be uploaded." });
@@ -78,7 +81,8 @@ export const AllocateBed = [
         email,
         number,
         age,
-        aadhar,
+        aadharFront,
+        aadharBack,
         photo,
       }) as ICustomer & { _id: Types.ObjectId };
 
