@@ -15,6 +15,7 @@ interface IFormInput {
   aadharFront: FileList;
   aadharBack: FileList;
   bed: string;
+  period: string;
 }
 
 const resolver: Resolver<IFormInput> = async (values) => {
@@ -38,18 +39,26 @@ const resolver: Resolver<IFormInput> = async (values) => {
       message: "Customer Number is required.",
     };
   }
+
+  if (!values.period) {
+    errors.number = {
+      type: "required",
+      message: "Period is required.",
+    };
+  }
   if (values.email && !/^\S+@\S+$/i.test(values.email)) {
     errors.email = {
       type: "pattern",
       message: "Invalid email address.",
     };
   }
-  if (!values.age || values.age < 18) {
+  if (!values.age || values.age < 16) {
     errors.age = {
       type: "min",
-      message: "Customer Age must be at least 18.",
+      message: "Customer Age must be at least 16.",
     };
   }
+
   if (!values.photo || values.photo.length === 0) {
     errors.photo = {
       type: "required",
@@ -150,6 +159,7 @@ const Form = () => {
           setValue("email", customer.email || "");
           setValue("age", customer.age);
           setValue("bed", customer.bed.bed);
+          setValue("period", customer.period);
 
           if (customer.photo) {
             const photoBlob = await fetch(customer.photo).then((res) =>
@@ -287,6 +297,30 @@ const Form = () => {
         />
         {errors.age && (
           <span className="text-red-600">{errors.age.message}</span>
+        )}
+      </div>
+      <div>
+        <label className="block text-gray-700 font-medium mb-2">
+          Period Of Days
+        </label>
+        <select
+          {...register("period")}
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition ease-in-out duration-150"
+        >
+          {["Day", "Month"].map((bed: any) => (
+            <option
+              key={bed}
+              value={bed}
+              className="cursor-pointer disabled:cursor-not-allowed"
+            >
+              {bed}
+            </option>
+          ))}
+        </select>
+        {errors.period && (
+          <span className="text-red-600 mt-1 text-sm">
+            {errors.period.message}
+          </span>
         )}
       </div>
       <div>

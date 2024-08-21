@@ -18,13 +18,15 @@ interface IBeds {
     type: string;
     isOccupied: boolean;
     occupiedDate: Date;
-    customer?: {
+    customer: {
       name?: string;
       number?: string;
       age?: number;
       email?: string;
       photo?: string;
-      aadhar?: string;
+      aadharFront?: string;
+      aadharBack?: string;
+      period?: string;
     };
   };
 }
@@ -37,7 +39,17 @@ const Bed: React.FC<IBeds> = ({ name, occupied, endsIn, type, bed }) => {
     const updateTimeRemaining = () => {
       const now = dayjs();
       const end = dayjs(endTime);
-      const duration = dayjs.duration(end.diff(now));
+      let duration;
+
+      // Determine the duration based on the period type
+      if (bed?.customer?.period === "Month") {
+        const endDate = now.add(1, "month");
+        duration = dayjs.duration(endDate.diff(now, "months"), "months");
+      } else if (bed?.customer?.period === "Day") {
+        duration = dayjs.duration(end.diff(now, "days"), "days");
+      } else {
+        duration = dayjs.duration(end.diff(now));
+      }
 
       if (duration.asMilliseconds() <= 0) {
         setTimeRemaining("Expired");
@@ -52,7 +64,7 @@ const Bed: React.FC<IBeds> = ({ name, occupied, endsIn, type, bed }) => {
     updateTimeRemaining();
 
     return () => clearInterval(intervalId);
-  }, [endsIn]);
+  }, [endTime, bed]);
 
   return (
     <div className="p-1 md:p-3 lg:p-1 mx-auto bg-white shadow-md rounded-lg">

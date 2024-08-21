@@ -12,6 +12,7 @@ export interface ICustomer extends Document {
   createdAt?: Date;
   updatedAt?: Date;
   checkOutAt?: Date;
+  period: string;
 }
 
 const schema = new Schema<ICustomer, Model<ICustomer>>(
@@ -24,6 +25,11 @@ const schema = new Schema<ICustomer, Model<ICustomer>>(
     aadharFront: { type: String, required: [true, "Aadhar Front is Required"] },
     aadharBack: { type: String, required: [true, "Aadhar Back is Required"] },
     checkOutAt: { type: Date },
+    period: {
+      type: String,
+      required: [true, "Period is Required"],
+      enum: ["Day", "Month"],
+    },
     bed: {
       type: Schema.Types.ObjectId,
       required: [true, "Bed is Required"],

@@ -3,7 +3,6 @@ import BedModel from "../models/bed.model";
 import { BedTypes } from "../utils/BedTypes";
 import { CustomAdminRequest } from "../functions/CustomRequest";
 import customerModel, { ICustomer } from "../models/customer.model";
-import { getHtmlContent } from "../functions/GetHtmlContent";
 import { generatePDF } from "../functions/generatePdf";
 import { getCheckoutHtmlContent } from "../functions/getCheckoutHtml";
 import dayjs from "dayjs";

@@ -27,6 +27,7 @@ interface IUserCard {
       photo?: string;
       aadharFront?: string;
       aadharBack?: string;
+      period?: string;
     };
   };
   children: React.ReactNode;
@@ -105,6 +106,10 @@ export default function UserCard({ bed, children }: IUserCard) {
 
               {bed.customer && (
                 <>
+                  <div className="flex items-center justify-between">
+                    <div className="font-medium text-gray-600">Period:</div>
+                    <div className="text-gray-600">{bed.customer.period}</div>
+                  </div>
                   <div className="font-medium text-gray-600">
                     Customer Details:
                   </div>

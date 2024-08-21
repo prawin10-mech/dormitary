@@ -49,7 +49,7 @@ export const AllocateBed = [
   },
   async (req: Request, res: Response) => {
     try {
-      const { name, email, number, age, bed } = req.body;
+      const { name, email, number, age, bed, period } = req.body;
       const files = req.files as FileFields;
       const photo = files.photo?.[0]?.path;
       const aadharFront = files.aadharFront?.[0]?.path;
@@ -84,15 +84,16 @@ export const AllocateBed = [
         aadharFront,
         aadharBack,
         photo,
+        period,
       }) as ICustomer & { _id: Types.ObjectId };
+
+      newCustomer.bed = existingBed._id;
+      await newCustomer.save();
 
       existingBed.isOccupied = true;
       existingBed.customer = newCustomer._id;
       existingBed.occupiedDate = new Date();
       await existingBed.save();
-
-      newCustomer.bed = existingBed._id;
-      await newCustomer.save();
 
       const date = dayjs();
       const endDate = date.add(1, "day").toDate();
