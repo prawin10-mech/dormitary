@@ -25,7 +25,8 @@ interface IUserCard {
       age?: number;
       email?: string;
       photo?: string;
-      aadhar?: string;
+      aadharFront?: string;
+      aadharBack?: string;
     };
   };
   children: React.ReactNode;
@@ -145,11 +146,23 @@ export default function UserCard({ bed, children }: IUserCard) {
                         </div>
                       )}
 
-                      {bed.customer?.aadhar && (
+                      {bed.customer?.aadharFront && (
                         <div className="mt-2">
                           <Image
-                            src={bed.customer?.aadhar}
-                            alt={bed.customer?.name || "Customer Aadhar"}
+                            src={bed.customer?.aadharFront}
+                            alt={bed.customer?.name || "Customer Aadhar Front"}
+                            width={300}
+                            height={200}
+                            className="rounded-lg"
+                          />
+                        </div>
+                      )}
+
+                      {bed.customer?.aadharBack && (
+                        <div className="mt-2">
+                          <Image
+                            src={bed.customer?.aadharBack}
+                            alt={bed.customer?.name || "Customer Aadhar Back"}
                             width={300}
                             height={200}
                             className="rounded-lg"
