@@ -46,6 +46,7 @@ export default function Home() {
                   name={bed.bed}
                   occupied={bed.isOccupied}
                   endsIn={bed.occupiedDate}
+                  type={bed.type}
                   bed={bed}
                 />
               ))}
@@ -58,6 +59,7 @@ export default function Home() {
                   name={bed.bed}
                   occupied={bed.isOccupied}
                   endsIn={bed.occupiedDate}
+                  type={bed.type}
                   bed={bed}
                 />
               ))}
@@ -70,6 +72,7 @@ export default function Home() {
                   name={bed.bed}
                   occupied={bed.isOccupied}
                   endsIn={bed.occupiedDate}
+                  type={bed.type}
                   bed={bed}
                 />
               ))}
