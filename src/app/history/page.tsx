@@ -45,7 +45,7 @@ export default function History() {
       const days = history[expandedYear!][month];
       const total = Object.values(days)
         .flat()
-        .reduce((sum, record: HistoryRecord) => sum + 200, 0);
+        .reduce((sum: number) => sum + 200, 0);
       setMonthTotal(total);
     } else {
       setMonthTotal(null);

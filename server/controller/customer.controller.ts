@@ -160,7 +160,10 @@ export const AllocateBed = [
 export const getCustomerDetails = async (req: Request, res: Response) => {
   try {
     const { number } = req.params;
-    const customer = await customerModel.findOne({ number }).populate("bed");
+    const customer = await customerModel
+      .findOne({ number })
+      .sort({ createdAt: -1 })
+      .populate("bed");
 
     if (!customer) {
       return res.status(400).json({ message: "Customer not found" });

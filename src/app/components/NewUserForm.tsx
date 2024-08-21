@@ -77,8 +77,7 @@ const resolver: Resolver<IFormInput> = async (values) => {
 };
 
 const Form = () => {
-  const { allocateBed, getBeds, beds, getCustomerDetails, customer } =
-    useGlobalContext();
+  const { allocateBed, getBeds, beds, getCustomerDetails } = useGlobalContext();
   const {
     register,
     handleSubmit,
