@@ -24,7 +24,7 @@ export default function Home() {
           <NewUserForm />
         </div>
         <div className="flex flex-col lg:w-2/3 w-full p-1 sm:p-2 md:p-3 bg-red-200 shadow-lg rounded-lg overflow-auto h-full">
-          <h2 className="text-xl font-bold mb-4">Available Rooms</h2>
+          <h2 className="text-xl font-bold mb-4">Available Beds</h2>
           <div className="flex-grow min-h-0">
             {/* <div className="grid grid-cols-3  sm:grid-cols-6  mb-3">
               {beds.slice(0, 12).map((bed: any) => (
