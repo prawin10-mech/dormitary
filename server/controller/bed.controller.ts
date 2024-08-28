@@ -14,15 +14,16 @@ export const AddBeds = async (req: Request, res: Response) => {
       const existingBed = await BedModel.findOne({ type: bedType });
 
       if (existingBed) {
-        return res
-          .status(400)
-          .json({ message: `Bed of type ${bedType} already exists` });
+        continue;
+        // return res
+        //   .status(400)
+        //   .json({ message: `Bed of type ${bedType} already exists` });
       }
 
       // Create a new bed with the current type
       const newBed = new BedModel({
         bed: bedType,
-        type: bedType.startsWith("A") ? "AC" : "REGULAR",
+        type: "AC",
       });
       await newBed.save();
     }

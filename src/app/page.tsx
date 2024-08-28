@@ -26,7 +26,7 @@ export default function Home() {
         <div className="flex flex-col lg:w-2/3 w-full p-1 sm:p-2 md:p-3 bg-red-200 shadow-lg rounded-lg overflow-auto h-full">
           <h2 className="text-xl font-bold mb-4">Available Rooms</h2>
           <div className="flex-grow min-h-0">
-            <div className="grid grid-cols-3  sm:grid-cols-6  mb-3">
+            {/* <div className="grid grid-cols-3  sm:grid-cols-6  mb-3">
               {beds.slice(0, 12).map((bed: any) => (
                 <Bed
                   key={bed._id}
@@ -37,45 +37,51 @@ export default function Home() {
                   bed={bed}
                 />
               ))}
+            </div> */}
+            <div className="border-b-2 border-dotted border-gray-500 my-4" />
+            <div className="grid grid-cols-3  sm:grid-cols-5 ">
+              {beds
+                .filter((b: any) => b.bed.startsWith("A"))
+                .map((bed: any) => (
+                  <Bed
+                    key={bed._id}
+                    name={bed.bed}
+                    occupied={bed.isOccupied}
+                    endsIn={bed.occupiedDate}
+                    type={bed.type}
+                    bed={bed}
+                  />
+                ))}
             </div>
             <div className="border-b-2 border-dotted border-gray-500 my-4" />
-            <div className="grid grid-cols-3  sm:grid-cols-6 ">
-              {beds.slice(12, 18).map((bed: any) => (
-                <Bed
-                  key={bed._id}
-                  name={bed.bed}
-                  occupied={bed.isOccupied}
-                  endsIn={bed.occupiedDate}
-                  type={bed.type}
-                  bed={bed}
-                />
-              ))}
+            <div className="grid grid-cols-3  sm:grid-cols-5 ">
+              {beds
+                .filter((b: any) => b.bed.startsWith("B"))
+                .map((bed: any) => (
+                  <Bed
+                    key={bed._id}
+                    name={bed.bed}
+                    occupied={bed.isOccupied}
+                    endsIn={bed.occupiedDate}
+                    type={bed.type}
+                    bed={bed}
+                  />
+                ))}
             </div>
             <div className="border-b-2 border-dotted border-gray-500 my-4" />
-            <div className="grid grid-cols-3  sm:grid-cols-6 ">
-              {beds.slice(18, 24).map((bed: any) => (
-                <Bed
-                  key={bed._id}
-                  name={bed.bed}
-                  occupied={bed.isOccupied}
-                  endsIn={bed.occupiedDate}
-                  type={bed.type}
-                  bed={bed}
-                />
-              ))}
-            </div>
-            <div className="border-b-2 border-dotted border-gray-500 my-4" />
-            <div className="grid grid-cols-3  sm:grid-cols-6 ">
-              {beds.slice(24, 30).map((bed: any) => (
-                <Bed
-                  key={bed._id}
-                  name={bed.bed}
-                  occupied={bed.isOccupied}
-                  endsIn={bed.occupiedDate}
-                  type={bed.type}
-                  bed={bed}
-                />
-              ))}
+            <div className="grid grid-cols-3  sm:grid-cols-5 ">
+              {beds
+                .filter((b: any) => b.bed.startsWith("C"))
+                .map((bed: any) => (
+                  <Bed
+                    key={bed._id}
+                    name={bed.bed}
+                    occupied={bed.isOccupied}
+                    endsIn={bed.occupiedDate}
+                    type={bed.type}
+                    bed={bed}
+                  />
+                ))}
             </div>
           </div>
         </div>
