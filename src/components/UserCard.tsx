@@ -1,4 +1,6 @@
-import React from "react";
+"use client";
+
+import React, { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -34,6 +36,37 @@ export interface IUserCard {
 }
 
 export default function UserCard({ bed, children }: IUserCard) {
+  const [previewImageIndex, setPreviewImageIndex] = useState<number | null>(
+    null
+  );
+
+  const images = [
+    bed.customer?.photo,
+    bed.customer?.aadharFront,
+    bed.customer?.aadharBack,
+  ].filter(Boolean);
+
+  const handleImageClick = (index: number) => {
+    setPreviewImageIndex(index);
+  };
+
+  const handleClosePreview = () => {
+    setPreviewImageIndex(null);
+  };
+
+  const handleNextImage = () => {
+    if (previewImageIndex !== null) {
+      setPreviewImageIndex((prevIndex) => (prevIndex! + 1) % images.length);
+    }
+  };
+
+  const handlePrevImage = () => {
+    if (previewImageIndex !== null) {
+      setPreviewImageIndex(
+        (prevIndex) => (prevIndex! - 1 + images.length) % images.length
+      );
+    }
+  };
   const { checkOutBed, getBeds } = useGlobalContext();
   if (!bed) {
     return (
@@ -185,6 +218,60 @@ export default function UserCard({ bed, children }: IUserCard) {
           {bed.isOccupied && <button onClick={handleCheckout}>Checkout</button>}
         </DialogFooter>
       </DialogContent>
+
+      {previewImageIndex !== null && (
+        <Dialog open={true}>
+          <DialogContent
+            className="w-full flex flex-col items-center"
+            onClick={handleClosePreview}
+          >
+            {images[previewImageIndex] && (
+              <Image
+                src={images[previewImageIndex]}
+                alt="Preview"
+                width={200}
+                height={100}
+                className="w-full h-auto rounded-lg"
+                onClick={(e) => e.stopPropagation()}
+              />
+            )}
+            <div className="mt-4 flex justify-between w-full">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handlePrevImage();
+                }}
+                className="py-2 px-4 bg-gray-700 text-white rounded-lg"
+              >
+                Previous
+              </button>
+              <button
+                onClick={(e) => {
+                  handleClosePreview();
+                }}
+                className="py-2 px-4 bg-gray-700 text-white rounded-lg"
+              >
+                Close
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleNextImage();
+                }}
+                className="py-2 px-4 bg-gray-700 text-white rounded-lg"
+              >
+                Next
+              </button>
+            </div>
+            {/* <button
+              onClick={handleClosePreview}
+              className="mt-4 py-2 px-4 bg-gray-700 text-white rounded-lg"
+            >
+              Close Preview
+            </button> */}
+          </DialogContent>
+        </Dialog>
+      )}
     </Dialog>
   );
 }
