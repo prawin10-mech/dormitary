@@ -12,7 +12,7 @@ import Image from "next/image";
 import toast from "react-hot-toast";
 import { useGlobalContext } from "@/lib/useGlobalContext";
 
-interface IUserCard {
+export interface IUserCard {
   bed: {
     _id: string;
     bed: string;

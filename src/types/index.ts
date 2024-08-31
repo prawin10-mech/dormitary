@@ -13,6 +13,13 @@ export interface HistoryRecord {
   name: string;
   phone: string;
   createdAt: string;
+  aadharFront?: string;
+  aadharBack?: string;
+  photo?: string;
+  email?: string;
+  number?: string;
+  age?: string;
+  period?: string;
 }
 
 export interface Day {

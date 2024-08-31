@@ -6,6 +6,7 @@ import customerModel, { ICustomer } from "../models/customer.model";
 import { generatePDF } from "../functions/generatePdf";
 import { getCheckoutHtmlContent } from "../functions/getCheckoutHtml";
 import dayjs from "dayjs";
+import { MdFormatListNumberedRtl } from "react-icons/md";
 
 export const AddBeds = async (req: Request, res: Response) => {
   try {
@@ -62,14 +63,14 @@ export const getBedsHistory = async (req: Request, res: Response) => {
     // Fetch customers and populate bed details
     const customers = await customerModel
       .find() // Or use find({ <filter> }) to filter results
-      .populate("bed") // Populate the 'bed' field with bed details
+      .populate("bed")
       .exec();
 
     // Organize data by year, month, and day
     const history = customers.reduce((acc, customer) => {
       const createdAt = customer.createdAt!;
       const year = createdAt.getFullYear();
-      const month = createdAt.getMonth() + 1; // Months are zero-indexed
+      const month = createdAt.getMonth() + 1;
       const day = createdAt.getDate();
 
       if (!acc[year]) acc[year] = {};
@@ -81,6 +82,12 @@ export const getBedsHistory = async (req: Request, res: Response) => {
         name: customer.name,
         phone: customer.number,
         createdAt: customer.createdAt,
+        number: customer.number,
+        email: customer.email,
+        age: customer.age,
+        photo: customer.photo,
+        aadharBack: customer.aadharBack,
+        aadharFront: customer.aadharFront,
       });
 
       return acc;
