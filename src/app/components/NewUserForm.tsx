@@ -40,6 +40,13 @@ const resolver: Resolver<IFormInput> = async (values) => {
     };
   }
 
+  if (values.number && !/^\d+$/i.test(values.number)) {
+    errors.number = {
+      type: "pattern",
+      message: "Invalid number format. Only digits are allowed.",
+    };
+  }
+
   if (!values.period) {
     errors.number = {
       type: "required",
