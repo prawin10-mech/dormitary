@@ -49,7 +49,7 @@ export const AllocateBed = [
   },
   async (req: Request, res: Response) => {
     try {
-      const { name, email, number, age, bed, period } = req.body;
+      const { name, email, number, age, bed, period, purpose } = req.body;
       const files = req.files as FileFields;
       const photo = files.photo?.[0]?.path;
       const aadharFront = files.aadharFront?.[0]?.path;
@@ -85,6 +85,7 @@ export const AllocateBed = [
         aadharBack,
         photo,
         period,
+        purpose,
       }) as ICustomer & { _id: Types.ObjectId };
 
       newCustomer.bed = existingBed._id;

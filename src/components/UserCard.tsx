@@ -30,6 +30,7 @@ export interface IUserCard {
       aadharFront?: string;
       aadharBack?: string;
       period?: string;
+      purpose?: string;
     };
   };
   children: React.ReactNode;
@@ -216,6 +217,12 @@ export default function UserCard({ bed, children }: IUserCard) {
                           />
                         </div>
                       )}
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="font-medium text-gray-600">Purpose:</div>
+                      <div className="text-gray-600">
+                        {bed.customer?.purpose || "N/A"}
+                      </div>
                     </div>
                   </div>
                 </>

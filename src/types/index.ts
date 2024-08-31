@@ -20,6 +20,7 @@ export interface HistoryRecord {
   number?: string;
   age?: string;
   period?: string;
+  purpose?: string;
 }
 
 export interface Day {

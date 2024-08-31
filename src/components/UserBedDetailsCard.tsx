@@ -145,6 +145,10 @@ export default function UserBedDetailsCard({ bed, children }: IUserCard) {
                     </div>
                   )}
                 </div>
+                <div className="flex items-center justify-between">
+                  <div className="font-medium text-gray-600">Purpose:</div>
+                  <div className="text-gray-600">{bed.purpose || "N/A"}</div>
+                </div>
               </div>
             </div>
           </DialogDescription>
