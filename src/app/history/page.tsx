@@ -6,6 +6,8 @@ import React, { useEffect, useState } from "react";
 import dayjs from "dayjs";
 import advancedFormat from "dayjs/plugin/advancedFormat";
 import { HistoryResponse, HistoryRecord, Bed } from "@/types";
+import UserCard, { IUserCard } from "@/components/UserCard";
+import UserBedDetailsCard from "@/components/UserBedDetailsCard";
 
 dayjs.extend(advancedFormat);
 
@@ -151,8 +153,12 @@ export default function History() {
                                                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                                                       {index + 1}
                                                     </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                                      {record.name}
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm cursor-pointer font-medium text-gray-900">
+                                                      <UserBedDetailsCard
+                                                        bed={record}
+                                                      >
+                                                        {record.name}
+                                                      </UserBedDetailsCard>
                                                     </td>
                                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                                       {record.phone}
