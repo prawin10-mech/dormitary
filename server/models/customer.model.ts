@@ -13,6 +13,7 @@ export interface ICustomer extends Document {
   updatedAt?: Date;
   checkOutAt?: Date;
   period: string;
+  purpose: string;
 }
 
 const schema = new Schema<ICustomer, Model<ICustomer>>(
@@ -24,6 +25,7 @@ const schema = new Schema<ICustomer, Model<ICustomer>>(
     photo: { type: String, required: [true, "Photo is Required"] },
     aadharFront: { type: String, required: [true, "Aadhar Front is Required"] },
     aadharBack: { type: String, required: [true, "Aadhar Back is Required"] },
+    purpose: { type: String, required: [true, "Purpose is Required"] },
     checkOutAt: { type: Date },
     period: {
       type: String,

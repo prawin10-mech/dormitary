@@ -16,6 +16,7 @@ interface IFormInput {
   aadharBack: FileList;
   bed: string;
   period: string;
+  purpose: string;
 }
 
 const resolver: Resolver<IFormInput> = async (values) => {
@@ -63,6 +64,13 @@ const resolver: Resolver<IFormInput> = async (values) => {
     errors.age = {
       type: "min",
       message: "Customer Age must be at least 16.",
+    };
+  }
+
+  if (!values.purpose) {
+    errors.purpose = {
+      type: "required",
+      message: "Purpose is required.",
     };
   }
 
@@ -306,6 +314,20 @@ const Form = () => {
           <span className="text-red-600">{errors.age.message}</span>
         )}
       </div>
+
+      <div>
+        <label className="block text-gray-700">Purpose</label>
+        <input
+          type="text"
+          {...register("purpose")}
+          placeholder="Enter Purpose"
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+        />
+        {errors.purpose && (
+          <span className="text-red-600">{errors.purpose.message}</span>
+        )}
+      </div>
+
       <div>
         <label className="block text-gray-700 font-medium mb-2">
           Period Of Days

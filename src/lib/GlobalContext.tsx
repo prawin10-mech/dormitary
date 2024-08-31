@@ -143,6 +143,7 @@ interface GlobalContextType {
     bed: string;
     photo: FileList;
     period: string;
+    purpose: string;
   }) => Promise<{
     bed: any;
     customer: any;
@@ -346,6 +347,7 @@ export function GlobalContextProvider({
       bed: string;
       photo: FileList;
       period: string;
+      purpose: string;
     }) => {
       try {
         const formData = new FormData();
@@ -356,6 +358,7 @@ export function GlobalContextProvider({
         formData.append("aadharFront", body.aadharFront[0]);
         formData.append("aadharBack", body.aadharBack[0]);
         formData.append("bed", body.bed);
+        formData.append("purpose", body.purpose);
         formData.append("period", body.period);
         formData.append("photo", body.photo[0]);
 

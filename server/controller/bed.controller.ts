@@ -88,6 +88,7 @@ export const getBedsHistory = async (req: Request, res: Response) => {
         photo: customer.photo,
         aadharBack: customer.aadharBack,
         aadharFront: customer.aadharFront,
+        purpose: customer.purpose,
       });
 
       return acc;
