@@ -174,36 +174,45 @@ export default function UserCard({ bed, children }: IUserCard) {
 
                     <div className="flex gpa-4">
                       {bed.customer?.photo && (
-                        <div className="mt-2">
+                        <div className="mt-2 cursor-pointer">
                           <Image
                             src={bed.customer?.photo}
                             alt={bed.customer?.name || "Customer Photo"}
                             width={100}
                             height={100}
+                            onClick={() => {
+                              handleImageClick(0);
+                            }}
                           />
                         </div>
                       )}
 
                       {bed.customer?.aadharFront && (
-                        <div className="mt-2">
+                        <div className="mt-2  cursor-pointer">
                           <Image
                             src={bed.customer?.aadharFront}
                             alt={bed.customer?.name || "Customer Aadhar Front"}
                             width={300}
                             height={200}
                             className="rounded-lg"
+                            onClick={() => {
+                              handleImageClick(1);
+                            }}
                           />
                         </div>
                       )}
 
                       {bed.customer?.aadharBack && (
-                        <div className="mt-2">
+                        <div className="mt-2  cursor-pointer">
                           <Image
                             src={bed.customer?.aadharBack}
                             alt={bed.customer?.name || "Customer Aadhar Back"}
                             width={300}
                             height={200}
                             className="rounded-lg"
+                            onClick={() => {
+                              handleImageClick(2);
+                            }}
                           />
                         </div>
                       )}
