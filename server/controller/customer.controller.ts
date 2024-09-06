@@ -96,7 +96,7 @@ export const AllocateBed = [
       existingBed.occupiedDate = new Date();
       await existingBed.save();
 
-      const date = dayjs();
+      const date = dayjs(new Date());
       const endDate = date.add(1, "day").toDate();
 
       AgendaHelper.scheduleEndBedPeriod(existingBed._id.toString(), endDate);
@@ -116,7 +116,7 @@ export const AllocateBed = [
           price: 200,
         },
         status: "paid",
-        dueDate: date.format("DD-MM-YYYY hh:mm::ss"),
+        dueDate: date.format("DD-MM-YYYY hh:mm:ss"),
         invoiceTo: {
           name: newCustomer.name,
           address: "",
