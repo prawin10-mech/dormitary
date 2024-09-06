@@ -8,9 +8,14 @@ import { Types } from "mongoose";
 import dotenv from "dotenv";
 import dayjs from "dayjs";
 import AgendaHelper from "../functions/agenda_helper";
-import { sendWhatsappMessage } from "../functions/sendWhatsAppMessage";
 import { getHtmlContent } from "../functions/GetHtmlContent";
 import { generatePDF } from "../functions/generatePdf";
+
+import utc from "dayjs/plugin/utc";
+import localizedFormat from "dayjs/plugin/localizedFormat";
+
+dayjs.extend(localizedFormat);
+dayjs.extend(utc);
 
 dotenv.config();
 
@@ -116,13 +121,13 @@ export const AllocateBed = [
           price: 200,
         },
         status: "paid",
-        dueDate: date.format("DD-MM-YYYY hh:mm:ss"),
+        dueDate: dayjs().utcOffset(330).format("YYYY-MM-DD HH:mm:ss"),
         invoiceTo: {
           name: newCustomer.name,
           address: "",
           phone: newCustomer.number,
         },
-        createDate: date.format("DD-MM-YYYY hh:mm::ss"),
+        createDate: dayjs().utcOffset(330).format("YYYY-MM-DD HH:mm:ss"),
 
         invoiceFrom: {
           name: "Sri vijayalakshmi A/C Dormitary, Tanuku, 534210",
