@@ -6,7 +6,11 @@ import customerModel, { ICustomer } from "../models/customer.model";
 import { generatePDF } from "../functions/generatePdf";
 import { getCheckoutHtmlContent } from "../functions/getCheckoutHtml";
 import dayjs from "dayjs";
-import { MdFormatListNumberedRtl } from "react-icons/md";
+import utc from "dayjs/plugin/utc";
+import localizedFormat from "dayjs/plugin/localizedFormat";
+
+dayjs.extend(utc);
+dayjs.extend(localizedFormat);
 
 export const AddBeds = async (req: Request, res: Response) => {
   try {
@@ -147,14 +151,16 @@ export const CheckoutBed = async (req: Request, res: Response) => {
         price: 200,
       },
       status: "paid",
-      dueDate: date.format("DD-MM-YYYY hh:mm::ss"),
+      dueDate: date.utcOffset(330).format("DD-MM-YYYY hh:mm::ss"),
       invoiceTo: {
         name: customer.name,
         address: "",
         phone: customer.number,
       },
-      createDate: dayjs(bedDetails.occupiedDate).format("DD-MM-YYYY hh:mm::ss"),
-      checkoutDate: date.format("DD-MM-YYYY hh:mm::ss"),
+      createDate: dayjs(bedDetails.occupiedDate)
+        .utcOffset(330)
+        .format("DD-MM-YYYY hh:mm::ss"),
+      checkoutDate: date.utcOffset(330).format("DD-MM-YYYY hh:mm::ss"),
       invoiceFrom: {
         name: "Sri vijayalakshmi A/C Dormitary, Tanuku, 534210",
         phone: "9876543210",
