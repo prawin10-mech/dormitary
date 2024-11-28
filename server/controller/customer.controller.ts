@@ -54,7 +54,8 @@ export const AllocateBed = [
   },
   async (req: Request, res: Response) => {
     try {
-      const { name, email, number, age, bed, period, purpose } = req.body;
+      const { name, email, number, age, bed, period, purpose, paymentType } =
+        req.body;
       const files = req.files as FileFields;
       const photo = files.photo?.[0]?.path;
       const aadharFront = files.aadharFront?.[0]?.path;
@@ -91,6 +92,7 @@ export const AllocateBed = [
         photo,
         period,
         purpose,
+        paymentType,
       }) as ICustomer & { _id: Types.ObjectId };
 
       newCustomer.bed = existingBed._id;
@@ -121,13 +123,13 @@ export const AllocateBed = [
           price: 200,
         },
         status: "paid",
-        dueDate: dayjs().utcOffset(330).format("YYYY-MM-DD HH:mm:ss"),
+        dueDate: dayjs().utcOffset(330).format("YYYY-MM-DD hh:mm:ss A"),
         invoiceTo: {
           name: newCustomer.name,
           address: "",
           phone: newCustomer.number,
         },
-        createDate: dayjs().utcOffset(330).format("YYYY-MM-DD HH:mm:ss"),
+        createDate: dayjs().utcOffset(330).format("YYYY-MM-DD hh:mm:ss A"),
 
         invoiceFrom: {
           name: "Sri vijayalakshmi A/C Dormitary, Tanuku, 534210",

@@ -144,6 +144,7 @@ interface GlobalContextType {
     photo: FileList;
     period: string;
     purpose: string;
+    paymentType: string;
   }) => Promise<{
     bed: any;
     customer: any;
@@ -348,6 +349,7 @@ export function GlobalContextProvider({
       photo: FileList;
       period: string;
       purpose: string;
+      paymentType: string;
     }) => {
       try {
         const formData = new FormData();
@@ -361,6 +363,7 @@ export function GlobalContextProvider({
         formData.append("purpose", body.purpose);
         formData.append("period", body.period);
         formData.append("photo", body.photo[0]);
+        formData.append("paymentType", body.paymentType);
 
         let accessToken = storageAvailable ? Cookies.get("accessToken") : "";
 
