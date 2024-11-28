@@ -32,25 +32,29 @@ interface IBeds {
 }
 
 const Bed: React.FC<IBeds> = ({ name, occupied, endsIn, type, bed }) => {
-  const endTime = dayjs(endsIn).add(1, "day");
+  // Add one day to the `endsIn` time
+  const adjustedEndTime = dayjs(endsIn).add(1, "day");
   const [timeRemaining, setTimeRemaining] = useState<string>("");
 
   useEffect(() => {
     const updateTimeRemaining = () => {
       const now = dayjs();
-      const end = dayjs(endTime);
+      const end = adjustedEndTime;
+
       let duration;
 
-      // Determine the duration based on the period type
+      // Determine the duration based on the customer's period type
       if (bed?.customer?.period === "Month") {
-        const endDate = now.add(1, "month");
-        duration = dayjs.duration(endDate.diff(now, "months"), "months");
+        const endDate = dayjs(bed.occupiedDate).add(1, "month");
+        duration = dayjs.duration(endDate.diff(now));
       } else if (bed?.customer?.period === "Day") {
-        duration = dayjs.duration(end.diff(now, "days"), "days");
+        const endDate = dayjs(bed.occupiedDate).add(1, "day");
+        duration = dayjs.duration(endDate.diff(now));
       } else {
         duration = dayjs.duration(end.diff(now));
       }
 
+      // Handle cases where the duration has expired
       if (duration.asMilliseconds() <= 0) {
         setTimeRemaining("Expired");
       } else {
@@ -64,7 +68,7 @@ const Bed: React.FC<IBeds> = ({ name, occupied, endsIn, type, bed }) => {
     updateTimeRemaining();
 
     return () => clearInterval(intervalId);
-  }, [endTime, bed]);
+  }, [adjustedEndTime, bed]);
 
   return (
     <div className="p-1 md:p-3 lg:p-1 mx-auto bg-white shadow-md rounded-lg">

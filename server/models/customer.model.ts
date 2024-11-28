@@ -14,6 +14,7 @@ export interface ICustomer extends Document {
   checkOutAt?: Date;
   period: string;
   purpose: string;
+  paymentType: string;
 }
 
 const schema = new Schema<ICustomer, Model<ICustomer>>(
@@ -27,6 +28,11 @@ const schema = new Schema<ICustomer, Model<ICustomer>>(
     aadharBack: { type: String, required: [true, "Aadhar Back is Required"] },
     purpose: { type: String, required: [true, "Purpose is Required"] },
     checkOutAt: { type: Date },
+    paymentType: {
+      type: String,
+      required: [true, "Payment Type is Required"],
+      enum: ["UPI", "Cash"],
+    },
     period: {
       type: String,
       required: [true, "Period is Required"],

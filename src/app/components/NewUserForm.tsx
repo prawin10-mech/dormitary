@@ -17,6 +17,7 @@ interface IFormInput {
   bed: string;
   period: string;
   purpose: string;
+  paymentType: string;
 }
 
 const resolver: Resolver<IFormInput> = async (values) => {
@@ -45,6 +46,13 @@ const resolver: Resolver<IFormInput> = async (values) => {
     errors.number = {
       type: "pattern",
       message: "Invalid number format. Only digits are allowed.",
+    };
+  }
+
+  if (!values.paymentType) {
+    errors.number = {
+      type: "required",
+      message: "Payment Type is required.",
     };
   }
 
@@ -123,6 +131,7 @@ const Form = () => {
   >(null);
 
   const onSubmit: SubmitHandler<IFormInput> = (values) => {
+    console.log(values);
     toast
       .promise(
         allocateBed(values),
@@ -175,6 +184,8 @@ const Form = () => {
           setValue("age", customer.age);
           setValue("bed", customer.bed.bed);
           setValue("period", customer.period);
+          setValue("paymentType", customer.paymentType);
+          setValue("purpose", customer.purpose);
 
           if (customer.photo) {
             const photoBlob = await fetch(customer.photo).then((res) =>
@@ -352,6 +363,32 @@ const Form = () => {
           </span>
         )}
       </div>
+
+      <div>
+        <label className="block text-gray-700 font-medium mb-2">
+          Payment Type
+        </label>
+        <select
+          {...register("paymentType")}
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition ease-in-out duration-150"
+        >
+          {["UPI", "Cash"].map((bed: any) => (
+            <option
+              key={bed}
+              value={bed}
+              className="cursor-pointer disabled:cursor-not-allowed"
+            >
+              {bed}
+            </option>
+          ))}
+        </select>
+        {errors.paymentType && (
+          <span className="text-red-600 mt-1 text-sm">
+            {errors.paymentType.message}
+          </span>
+        )}
+      </div>
+
       <div>
         <label className="block text-gray-700">Photo</label>
         <input

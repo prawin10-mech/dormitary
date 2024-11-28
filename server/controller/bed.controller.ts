@@ -151,7 +151,7 @@ export const CheckoutBed = async (req: Request, res: Response) => {
         price: 200,
       },
       status: "paid",
-      dueDate: date.utcOffset(330).format("DD-MM-YYYY hh:mm::ss"),
+      dueDate: date.utcOffset(330).format("DD-MM-YYYY hh:mm:ss A"),
       invoiceTo: {
         name: customer.name,
         address: "",
@@ -159,8 +159,8 @@ export const CheckoutBed = async (req: Request, res: Response) => {
       },
       createDate: dayjs(bedDetails.occupiedDate)
         .utcOffset(330)
-        .format("DD-MM-YYYY hh:mm::ss"),
-      checkoutDate: date.utcOffset(330).format("DD-MM-YYYY hh:mm::ss"),
+        .format("DD-MM-YYYY hh:mm:ss"),
+      checkoutDate: date.utcOffset(330).format("DD-MM-YYYY hh:mm:ss A"),
       invoiceFrom: {
         name: "Sri vijayalakshmi A/C Dormitary, Tanuku, 534210",
         phone: "9876543210",

@@ -31,6 +31,7 @@ export interface IUserCard {
       aadharBack?: string;
       period?: string;
       purpose?: string;
+      paymentType?: string;
     };
   };
   children: React.ReactNode;
@@ -170,6 +171,14 @@ export default function UserCard({ bed, children }: IUserCard) {
                       <div className="font-medium text-gray-600">Email:</div>
                       <div className="text-gray-600">
                         {bed.customer?.email || "N/A"}
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="font-medium text-gray-600">
+                        payment Type:
+                      </div>
+                      <div className="text-gray-600">
+                        {bed.customer?.paymentType || "N/A"}
                       </div>
                     </div>
 
