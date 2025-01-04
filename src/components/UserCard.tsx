@@ -137,27 +137,35 @@ export default function UserCard({ bed, children }: IUserCard) {
                 <span>{bed.type}</span>
               </div>
 
-              <div className="flex items-center justify-between">
-                <span className="font-medium text-gray-600">Check In:</span>
-                <span className="text-gray-700">
-                  {bed.occupiedDate
-                    ? dayjs(bed.occupiedDate).format("DD MMM YYYY hh:mm A")
-                    : "N/A"}
-                </span>
-              </div>
+              {bed.isOccupied && (
+                <>
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium text-gray-600">Check In:</span>
+                    <span className="text-gray-700">
+                      {bed.occupiedDate
+                        ? dayjs(bed.occupiedDate).format("DD MMM YYYY hh:mm A")
+                        : "N/A"}
+                    </span>
+                  </div>
 
-              <div className="flex items-center justify-between">
-                <span className="font-medium text-gray-600">Check Out:</span>
-                <span className="text-gray-700">
-                  {bed.customer && bed.customer.checkout
-                    ? dayjs(bed.customer.checkout).format("DD MMM YYYY hh:mm A")
-                    : bed.occupiedDate
-                    ? dayjs(bed.occupiedDate)
-                        .add(1, "day")
-                        .format("DD MMM YYYY hh:mm A")
-                    : "N/A"}
-                </span>
-              </div>
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium text-gray-600">
+                      Check Out:
+                    </span>
+                    <span className="text-gray-700">
+                      {bed.customer && bed.customer.checkout
+                        ? dayjs(bed.customer.checkout).format(
+                            "DD MMM YYYY hh:mm A"
+                          )
+                        : bed.occupiedDate
+                        ? dayjs(bed.occupiedDate)
+                            .add(1, "day")
+                            .format("DD MMM YYYY hh:mm A")
+                        : "N/A"}
+                    </span>
+                  </div>
+                </>
+              )}
 
               {/* Add period or other bed details here if desired */}
             </div>
