@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import dayjs from "dayjs";
 import {
   Dialog,
   DialogContent,
@@ -21,6 +22,7 @@ export interface IUserCard {
     type: string;
     isOccupied: boolean;
     occupiedDate: Date;
+    createdAt?: Date;
     customer?: {
       name?: string;
       number?: string;
@@ -32,6 +34,7 @@ export interface IUserCard {
       period?: string;
       purpose?: string;
       paymentType?: string;
+      checkout?: Date;
     };
   };
   children: React.ReactNode;
@@ -42,26 +45,34 @@ export default function UserCard({ bed, children }: IUserCard) {
     null
   );
 
+  // Collect images into an array, ignoring any undefined/null
   const images = [
-    bed.customer?.photo,
-    bed.customer?.aadharFront,
-    bed.customer?.aadharBack,
+    bed?.customer?.photo,
+    bed?.customer?.aadharFront,
+    bed?.customer?.aadharBack,
   ].filter(Boolean);
 
+  // Keep your context logic for checking out a bed
+  const { checkOutBed, getBeds } = useGlobalContext();
+
+  // Opens the preview modal at the given image index
   const handleImageClick = (index: number) => {
     setPreviewImageIndex(index);
   };
 
+  // Closes the preview modal
   const handleClosePreview = () => {
     setPreviewImageIndex(null);
   };
 
+  // Navigate to next image
   const handleNextImage = () => {
     if (previewImageIndex !== null) {
       setPreviewImageIndex((prevIndex) => (prevIndex! + 1) % images.length);
     }
   };
 
+  // Navigate to previous image
   const handlePrevImage = () => {
     if (previewImageIndex !== null) {
       setPreviewImageIndex(
@@ -69,7 +80,22 @@ export default function UserCard({ bed, children }: IUserCard) {
       );
     }
   };
-  const { checkOutBed, getBeds } = useGlobalContext();
+
+  // Check-out logic
+  const handleCheckout = async () => {
+    toast
+      .promise(checkOutBed(bed._id), {
+        loading: "Checking out the bed. Please wait...",
+        success: () => `Bed successfully checked out!`,
+        error: (err) => `${err.toString()}`,
+      })
+      .then(() => {
+        getBeds();
+      })
+      .catch((err) => console.log(err));
+  };
+
+  // If bed data is missing, display an error
   if (!bed) {
     return (
       <div className="text-center text-gray-500">
@@ -78,225 +104,171 @@ export default function UserCard({ bed, children }: IUserCard) {
     );
   }
 
-  const handleCheckout = async () => {
-    toast
-      .promise(
-        checkOutBed(bed._id),
-        {
-          loading: "Checking bed Please wait",
-          success: () => `Bed Checked out`,
-          error: (err) => `${err.toString()}`,
-        },
-        {
-          style: {
-            minWidth: "250px",
-          },
-          success: {
-            duration: 5000,
-            icon: "🔥",
-          },
-          error: {
-            duration: 5000,
-            icon: "🛑",
-          },
-        }
-      )
-      .then(({ blob, filename }) => {
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = url;
-        link.setAttribute("download", filename);
-        document.body.appendChild(link);
-        link.click();
-        getBeds();
-      })
-      .catch((err) => {
-        console.log(err);
-      });
-  };
-
   return (
-    <Dialog>
-      <DialogTrigger>
-        <div className="cursor-pointer hover:bg-gray-100 p-2 rounded-md">
-          {children}
-        </div>
-      </DialogTrigger>
-      <DialogContent className="max-w-lg">
-        <DialogHeader className="bg-gray-100 p-4 rounded-t-md">
-          <DialogTitle className="text-xl font-semibold">
-            Bed Information
-          </DialogTitle>
-          <DialogDescription className="text-gray-700 mt-2">
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <div className="font-medium text-gray-600">Bed Name:</div>
-                <div className="text-gray-600">{bed.bed}</div>
+    <>
+      {/* Dialog Trigger */}
+      <Dialog>
+        <DialogTrigger asChild>
+          <div className="cursor-pointer hover:bg-gray-100 p-2 rounded-md">
+            {children}
+          </div>
+        </DialogTrigger>
+
+        {/* Main Modal: Bed & Customer Info */}
+        <DialogContent className="max-w-xl p-6">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold">
+              Bed Information
+            </DialogTitle>
+            <DialogDescription className="text-gray-600 mt-2">
+              Detailed information about the selected bed.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            {/* Bed Details */}
+            <div className="flex flex-col gap-2">
+              <div className="flex justify-between">
+                <span className="font-medium text-gray-700">Bed Name:</span>
+                <span>{bed.bed}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="font-medium text-gray-700">Type:</span>
+                <span>{bed.type}</span>
               </div>
 
               <div className="flex items-center justify-between">
-                <div className="font-medium text-gray-600">Type:</div>
-                <div className="text-gray-600">{bed.type}</div>
+                <span className="font-medium text-gray-600">Check In:</span>
+                <span className="text-gray-700">
+                  {bed.occupiedDate
+                    ? dayjs(bed.occupiedDate).format("DD MMM YYYY hh:mm A")
+                    : "N/A"}
+                </span>
               </div>
 
-              {bed.customer && (
-                <>
-                  <div className="flex items-center justify-between">
-                    <div className="font-medium text-gray-600">Period:</div>
-                    <div className="text-gray-600">{bed.customer.period}</div>
-                  </div>
-                  <div className="font-medium text-gray-600">
-                    Customer Details:
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <div className="font-medium text-gray-600">Name:</div>
-                      <div className="text-gray-600">
-                        {bed.customer?.name || "N/A"}
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div className="font-medium text-gray-600">Phone:</div>
-                      <div className="text-gray-600">
-                        {bed.customer?.number || "N/A"}
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div className="font-medium text-gray-600">Age:</div>
-                      <div className="text-gray-600">
-                        {bed.customer?.age || "N/A"}
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div className="font-medium text-gray-600">Email:</div>
-                      <div className="text-gray-600">
-                        {bed.customer?.email || "N/A"}
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div className="font-medium text-gray-600">
-                        payment Type:
-                      </div>
-                      <div className="text-gray-600">
-                        {bed.customer?.paymentType || "N/A"}
-                      </div>
-                    </div>
+              <div className="flex items-center justify-between">
+                <span className="font-medium text-gray-600">Check Out:</span>
+                <span className="text-gray-700">
+                  {bed.customer && bed.customer.checkout
+                    ? dayjs(bed.customer.checkout).format("DD MMM YYYY hh:mm A")
+                    : bed.occupiedDate
+                    ? dayjs(bed.occupiedDate)
+                        .add(1, "day")
+                        .format("DD MMM YYYY hh:mm A")
+                    : "N/A"}
+                </span>
+              </div>
 
-                    <div className="flex gpa-4">
-                      {bed.customer?.photo && (
-                        <div className="mt-2 cursor-pointer">
-                          <Image
-                            src={bed.customer?.photo}
-                            alt={bed.customer?.name || "Customer Photo"}
-                            width={100}
-                            height={100}
-                            onClick={() => {
-                              handleImageClick(0);
-                            }}
-                          />
-                        </div>
-                      )}
-
-                      {bed.customer?.aadharFront && (
-                        <div className="mt-2  cursor-pointer">
-                          <Image
-                            src={bed.customer?.aadharFront}
-                            alt={bed.customer?.name || "Customer Aadhar Front"}
-                            width={300}
-                            height={200}
-                            className="rounded-lg"
-                            onClick={() => {
-                              handleImageClick(1);
-                            }}
-                          />
-                        </div>
-                      )}
-
-                      {bed.customer?.aadharBack && (
-                        <div className="mt-2  cursor-pointer">
-                          <Image
-                            src={bed.customer?.aadharBack}
-                            alt={bed.customer?.name || "Customer Aadhar Back"}
-                            width={300}
-                            height={200}
-                            className="rounded-lg"
-                            onClick={() => {
-                              handleImageClick(2);
-                            }}
-                          />
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div className="font-medium text-gray-600">Purpose:</div>
-                      <div className="text-gray-600">
-                        {bed.customer?.purpose || "N/A"}
-                      </div>
-                    </div>
-                  </div>
-                </>
-              )}
+              {/* Add period or other bed details here if desired */}
             </div>
-          </DialogDescription>
-        </DialogHeader>
-        <DialogFooter>
-          {bed.isOccupied && <button onClick={handleCheckout}>Checkout</button>}
-        </DialogFooter>
-      </DialogContent>
 
-      {previewImageIndex !== null && (
-        <Dialog open={true}>
-          <DialogContent
-            className="w-full flex flex-col items-center"
-            onClick={handleClosePreview}
-          >
-            {images[previewImageIndex] && (
-              <Image
-                src={images[previewImageIndex]}
-                alt="Preview"
-                width={200}
-                height={100}
-                className="w-full h-auto rounded-lg"
-                onClick={(e) => e.stopPropagation()}
-              />
+            {/* Customer Details */}
+            {bed.customer && (
+              <>
+                <div className="text-gray-700 font-bold">Customer Details:</div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <span className="block text-sm font-medium text-gray-700">
+                      Name:
+                    </span>
+                    <span className="block">{bed.customer.name || "N/A"}</span>
+                  </div>
+                  <div>
+                    <span className="block text-sm font-medium text-gray-700">
+                      Phone:
+                    </span>
+                    <span className="block">
+                      {bed.customer.number || "N/A"}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="block text-sm font-medium text-gray-700">
+                      Age:
+                    </span>
+                    <span className="block">{bed.customer.age || "N/A"}</span>
+                  </div>
+                  <div>
+                    <span className="block text-sm font-medium text-gray-700">
+                      Email:
+                    </span>
+                    <span className="block">{bed.customer.email || "N/A"}</span>
+                  </div>
+                </div>
+
+                {/* Images Section */}
+                <div className="font-medium text-gray-700 mt-4">Images:</div>
+                <div className="overflow-x-auto flex gap-4 mt-2">
+                  {images.map((src, index) => (
+                    <div
+                      key={index}
+                      className="relative w-32 h-32 flex-shrink-0 border border-gray-300 rounded-lg overflow-hidden"
+                    >
+                      <Image
+                        src={src!}
+                        alt={`Image ${index + 1}`}
+                        fill
+                        className="object-cover cursor-pointer"
+                        onClick={() => handleImageClick(index)}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </>
             )}
-            <div className="mt-4 flex justify-between w-full">
+          </div>
+
+          {/* Footer: Check Out button */}
+          <DialogFooter>
+            {bed.isOccupied && (
               <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handlePrevImage();
-                }}
-                className="py-2 px-4 bg-gray-700 text-white rounded-lg"
+                onClick={handleCheckout}
+                className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
+              >
+                Check Out
+              </button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Image Preview Modal */}
+      {previewImageIndex !== null && (
+        <Dialog open onOpenChange={handleClosePreview}>
+          <DialogContent className="flex flex-col items-center space-y-4 max-w-md mx-auto p-4">
+            {/* Larger Container for the Preview Image */}
+            <div className="relative w-72 h-72">
+              <Image
+                src={images[previewImageIndex]!}
+                alt="Preview"
+                fill
+                className="object-contain rounded-lg"
+              />
+            </div>
+
+            {/* Navigation Buttons */}
+            <div className="flex gap-4">
+              <button
+                onClick={handlePrevImage}
+                className="px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-800"
               >
                 Previous
               </button>
               <button
-                onClick={(e) => {
-                  handleClosePreview();
-                }}
-                className="py-2 px-4 bg-gray-700 text-white rounded-lg"
+                onClick={handleClosePreview}
+                className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
               >
                 Close
               </button>
               <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleNextImage();
-                }}
-                className="py-2 px-4 bg-gray-700 text-white rounded-lg"
+                onClick={handleNextImage}
+                className="px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-800"
               >
                 Next
               </button>
             </div>
-            {/* <button
-              onClick={handleClosePreview}
-              className="mt-4 py-2 px-4 bg-gray-700 text-white rounded-lg"
-            >
-              Close Preview
-            </button> */}
           </DialogContent>
         </Dialog>
       )}
-    </Dialog>
+    </>
   );
 }

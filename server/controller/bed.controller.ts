@@ -8,6 +8,7 @@ import { getCheckoutHtmlContent } from "../functions/getCheckoutHtml";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import localizedFormat from "dayjs/plugin/localizedFormat";
+import { Check } from "lucide-react";
 
 dayjs.extend(utc);
 dayjs.extend(localizedFormat);
@@ -16,7 +17,7 @@ export const AddBeds = async (req: Request, res: Response) => {
   try {
     for (const bedType of BedTypes) {
       // Check if a bed of this type already exists
-      const existingBed = await BedModel.findOne({ type: bedType });
+      const existingBed = await BedModel.findOneAndDelete({ type: bedType });
 
       if (existingBed) {
         continue;
@@ -44,7 +45,8 @@ export const getBeds = async (req: Request, res: Response) => {
   try {
     const role = (req as CustomAdminRequest).role || "AGENT";
 
-    const customerFields = role !== "ADMIN" ? "-photo -aadhar" : "";
+    const customerFields =
+      role !== "ADMIN" ? "-photo -aadharFront -aadharBack" : "";
 
     const beds = await BedModel.find()
       .populate({
@@ -93,6 +95,8 @@ export const getBedsHistory = async (req: Request, res: Response) => {
         aadharBack: customer.aadharBack,
         aadharFront: customer.aadharFront,
         purpose: customer.purpose,
+        period: customer.period,
+        checkout: customer.checkOutAt,
       });
 
       return acc;
@@ -194,5 +198,27 @@ export const CheckoutBed = async (req: Request, res: Response) => {
     return res
       .status(500)
       .json({ message: "Something went wrong", error: error.message });
+  }
+};
+
+export const UpdateBeds = async (req: Request, res: Response) => {
+  try {
+    let i = 1;
+    for (const bedType of BedTypes) {
+      // Check if a bed of this type already exists
+      const existingBed = await BedModel.findOneAndUpdate(
+        { bed: bedType }, // Query condition
+        { $set: { bed: i } }, // Update operation
+        { new: true } // Return the updated document
+      );
+
+      console.log(existingBed);
+      i++;
+    }
+
+    return res.status(200).json({ message: "Beds Updated Successfully" });
+  } catch (error) {
+    console.error("Error creating beds:", error);
+    return res.status(500).json({ message: "Something went wrong", error });
   }
 };
