@@ -4,33 +4,26 @@ import type { NextRequest } from "next/server";
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Define public paths
+  // Define public and restricted paths
   const publicPaths = ["/login"];
+  const restrictedPaths = ["/dashboard", "/profile"]; // Add restricted routes if needed
 
   // Retrieve token from cookies
   const token = request.cookies.get("accessToken")?.value || "";
 
-  // Check if the current path is a public path
-  const isPublicPath = publicPaths.includes(pathname);
-
-  // Check authentication and redirect accordingly
-  //   if (token && pathname === "/") {
-  //     return NextResponse.redirect(new URL("/", request.nextUrl));
-  //   }
-
-  if (isPublicPath && token) {
-    return NextResponse.redirect(new URL("/", request.nextUrl));
+  // Redirect logged-in users away from the login page
+  if (pathname === "/login" && token) {
+    return NextResponse.redirect(new URL("/", request.url));
   }
 
-  if (!isPublicPath && !token) {
-    return NextResponse.redirect(new URL("/login", request.nextUrl));
+  // Redirect unauthenticated users away from restricted routes
+  if (restrictedPaths.includes(pathname) && !token) {
+    return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  // If the request doesn't match any condition, proceed as usual
   return NextResponse.next();
 }
 
-// Define paths for which this middleware should be applied
 export const config = {
   // Define the list of paths
   matcher: [

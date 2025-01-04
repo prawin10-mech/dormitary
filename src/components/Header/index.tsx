@@ -16,7 +16,7 @@ export default function Header() {
   const closeSidebar = () => setSidebarOpen(false);
 
   return (
-    <header className="relative flex items-center justify-between bg-red-100 p-4 lg:p-6 h-32 lg:h-16">
+    <header className="w-full bg-pink-200 py-4 px-6 shadow-md flex justify-between items-center">
       {/* Sidebar Button */}
       {admin && admin.role === "ADMIN" && (
         <button

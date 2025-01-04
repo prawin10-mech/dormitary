@@ -41,7 +41,7 @@ export default function Home() {
             <div className="border-b-2 border-dotted border-gray-500 my-4" />
             <div className="grid grid-cols-3  sm:grid-cols-5 ">
               {beds
-                .filter((b: any) => b.bed.startsWith("A"))
+                .filter((b: any) => b.bed <= 10)
                 .map((bed: any) => (
                   <Bed
                     key={bed._id}
@@ -56,7 +56,7 @@ export default function Home() {
             <div className="border-b-2 border-dotted border-gray-500 my-4" />
             <div className="grid grid-cols-3  sm:grid-cols-5 ">
               {beds
-                .filter((b: any) => b.bed.startsWith("B"))
+                .filter((b: any) => b.bed > 10 && b.bed <= 20)
                 .map((bed: any) => (
                   <Bed
                     key={bed._id}
@@ -71,7 +71,22 @@ export default function Home() {
             <div className="border-b-2 border-dotted border-gray-500 my-4" />
             <div className="grid grid-cols-3  sm:grid-cols-5 ">
               {beds
-                .filter((b: any) => b.bed.startsWith("C"))
+                .filter((b: any) => b.bed > 20 && b.bed <= 30)
+                .map((bed: any) => (
+                  <Bed
+                    key={bed._id}
+                    name={bed.bed}
+                    occupied={bed.isOccupied}
+                    endsIn={bed.occupiedDate}
+                    type={bed.type}
+                    bed={bed}
+                  />
+                ))}
+            </div>
+            <div className="border-b-2 border-dotted border-gray-500 my-4" />
+            <div className="grid grid-cols-3  sm:grid-cols-5 ">
+              {beds
+                .filter((b: any) => b.bed > 30 && b.bed <= 40)
                 .map((bed: any) => (
                   <Bed
                     key={bed._id}

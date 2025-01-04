@@ -18,6 +18,8 @@ interface IBeds {
     type: string;
     isOccupied: boolean;
     occupiedDate: Date;
+    createdAt?: Date;
+    checkout?: Date;
     customer: {
       name?: string;
       number?: string;

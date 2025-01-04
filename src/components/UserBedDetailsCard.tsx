@@ -1,4 +1,6 @@
-import React, { useState } from "react";
+"use client";
+import React, { useState, WheelEvent, MouseEvent } from "react";
+import dayjs from "dayjs";
 import {
   Dialog,
   DialogContent,
@@ -20,6 +22,18 @@ export default function UserBedDetailsCard({ bed, children }: IUserCard) {
     null
   );
 
+  // Zoom and Drag States
+  const [zoomLevel, setZoomLevel] = useState<number>(1);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState<{ x: number; y: number }>({
+    x: 0,
+    y: 0,
+  });
+  const [translate, setTranslate] = useState<{ x: number; y: number }>({
+    x: 0,
+    y: 0,
+  });
+
   if (!bed) {
     return (
       <div className="text-center text-gray-500">
@@ -28,30 +42,94 @@ export default function UserBedDetailsCard({ bed, children }: IUserCard) {
     );
   }
 
+  // Collect all images
   const images = [bed.photo, bed.aadharFront, bed.aadharBack].filter(Boolean);
 
+  // -----------------------
+  // Thumbnail / Modal Logic
+  // -----------------------
   const handleImageClick = (index: number) => {
     setPreviewImageIndex(index);
   };
 
   const handleClosePreview = () => {
     setPreviewImageIndex(null);
+    resetTransform(); // Reset zoom & drag
   };
 
   const handleNextImage = () => {
     if (previewImageIndex !== null) {
-      setPreviewImageIndex((prevIndex) => (prevIndex! + 1) % images.length);
+      setPreviewImageIndex((prev) => (prev! + 1) % images.length);
+      resetTransform(); // Reset transform when switching images
     }
   };
 
   const handlePrevImage = () => {
     if (previewImageIndex !== null) {
       setPreviewImageIndex(
-        (prevIndex) => (prevIndex! - 1 + images.length) % images.length
+        (prev) => (prev! - 1 + images.length) % images.length
       );
+      resetTransform(); // Reset transform when switching images
     }
   };
 
+  // -------------
+  // Zoom Controls
+  // -------------
+
+  const resetTransform = () => {
+    setZoomLevel(1);
+    setTranslate({ x: 0, y: 0 });
+  };
+
+  // -----------------
+  // Mouse Wheel Zoom
+  // -----------------
+  const handleWheelZoom = (e: WheelEvent<HTMLDivElement>) => {
+    e.stopPropagation();
+    e.preventDefault();
+    if (e.deltaY < 0) {
+      // Wheel Up => Zoom In
+      setZoomLevel((prev) => Math.min(prev + 0.1, 5));
+    } else {
+      // Wheel Down => Zoom Out
+      setZoomLevel((prev) => Math.max(prev - 0.1, 0.5));
+    }
+  };
+
+  // -----------
+  // Drag Logic
+  // -----------
+  const handleMouseDown = (e: MouseEvent<HTMLDivElement>) => {
+    e.stopPropagation();
+    // Only allow dragging if zoomLevel > 1
+    if (zoomLevel <= 1) return;
+    setIsDragging(true);
+    // Store the initial cursor position relative to the current translate
+    setDragStart({
+      x: e.clientX - translate.x,
+      y: e.clientY - translate.y,
+    });
+  };
+
+  const handleMouseMove = (e: MouseEvent<HTMLDivElement>) => {
+    if (!isDragging) return;
+    e.stopPropagation();
+    // Calculate how far the mouse has moved from the original drag start
+    setTranslate({
+      x: e.clientX - dragStart.x,
+      y: e.clientY - dragStart.y,
+    });
+  };
+
+  const handleMouseUpOrLeave = (e: MouseEvent<HTMLDivElement>) => {
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  // ------------------------
+  // Main Return (JSX Layout)
+  // ------------------------
   return (
     <Dialog>
       <DialogTrigger>
@@ -59,133 +137,190 @@ export default function UserBedDetailsCard({ bed, children }: IUserCard) {
           {children}
         </div>
       </DialogTrigger>
-      <DialogContent className="max-w-lg">
-        <DialogHeader className="bg-gray-100 p-4 rounded-t-md">
+
+      {/*
+        Main Modal:
+        - Make it responsive for all screens
+        - Allow horizontal scroll for the images only
+        - Make sure content remains visible
+      */}
+      <DialogContent className="w-full max-w-xl sm:max-w-2xl px-4 py-6">
+        <DialogHeader className="border-b border-gray-200 pb-3">
           <DialogTitle className="text-xl font-semibold">
             Bed Information
           </DialogTitle>
-          <DialogDescription className="text-gray-700 mt-2">
+        </DialogHeader>
+
+        {/*
+          We add a wrapper with a vertical scroll if content gets too tall
+          e.g., max-h-[80vh] so it doesn't exceed the viewport height
+        */}
+        <div className="max-h-[80vh] overflow-y-auto mt-4 space-y-4 pr-2">
+          {/* Bed Details */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="font-medium text-gray-600">Bed Name:</span>
+              <span className="text-gray-700">{bed.bed.bed}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="font-medium text-gray-600">Type:</span>
+              <span className="text-gray-700">{bed.bed.type}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="font-medium text-gray-600">Period:</span>
+              <span className="text-gray-700">{bed.period || "N/A"}</span>
+            </div>
+          </div>
+
+          {/* Customer Details */}
+          <div>
+            <span className="block font-medium text-gray-600 mb-2">
+              Customer Details:
+            </span>
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <div className="font-medium text-gray-600">Bed Name:</div>
-                <div className="text-gray-600">{bed.bed.bed}</div>
+                <span className="font-medium text-gray-600">Name:</span>
+                <span className="text-gray-700">{bed.name || "N/A"}</span>
               </div>
-
               <div className="flex items-center justify-between">
-                <div className="font-medium text-gray-600">Type:</div>
-                <div className="text-gray-600">{bed.bed.type}</div>
+                <span className="font-medium text-gray-600">Phone:</span>
+                <span className="text-gray-700">{bed.number || "N/A"}</span>
               </div>
-
               <div className="flex items-center justify-between">
-                <div className="font-medium text-gray-600">Period:</div>
-                <div className="text-gray-600">{bed.period}</div>
+                <span className="font-medium text-gray-600">Age:</span>
+                <span className="text-gray-700">{bed.age || "N/A"}</span>
               </div>
-              <div className="font-medium text-gray-600">Customer Details:</div>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <div className="font-medium text-gray-600">Name:</div>
-                  <div className="text-gray-600">{bed.name || "N/A"}</div>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="font-medium text-gray-600">Phone:</div>
-                  <div className="text-gray-600">{bed.number || "N/A"}</div>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="font-medium text-gray-600">Age:</div>
-                  <div className="text-gray-600">{bed.age || "N/A"}</div>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="font-medium text-gray-600">Email:</div>
-                  <div className="text-gray-600">{bed.email || "N/A"}</div>
-                </div>
-
-                <div className="flex gap-4">
-                  {bed.photo && (
-                    <div className="mt-2">
-                      <Image
-                        src={bed.photo}
-                        alt={bed.name || "Customer Photo"}
-                        width={100}
-                        height={100}
-                        className="cursor-pointer"
-                        onClick={() => {
-                          handleImageClick(0);
-                        }}
-                      />
-                    </div>
-                  )}
-
-                  {bed.aadharFront && (
-                    <div className="mt-2">
-                      <Image
-                        src={bed.aadharFront}
-                        alt={bed.name || "Customer Aadhar Front"}
-                        width={300}
-                        height={200}
-                        className="rounded-lg cursor-pointer"
-                        onClick={() => {
-                          handleImageClick(1);
-                        }}
-                      />
-                    </div>
-                  )}
-
-                  {bed.aadharBack && (
-                    <div className="mt-2">
-                      <Image
-                        src={bed.aadharBack}
-                        alt={bed.name || "Customer Aadhar Back"}
-                        width={300}
-                        height={200}
-                        className="rounded-lg cursor-pointer"
-                        onClick={() => {
-                          handleImageClick(2);
-                        }}
-                      />
-                    </div>
-                  )}
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="font-medium text-gray-600">Purpose:</div>
-                  <div className="text-gray-600">{bed.purpose || "N/A"}</div>
-                </div>
+              <div className="flex items-center justify-between">
+                <span className="font-medium text-gray-600">Email:</span>
+                <span className="text-gray-700">{bed.email || "N/A"}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="font-medium text-gray-600">Check Out:</span>
+                <span className="text-gray-700">
+                  {bed.checkout
+                    ? dayjs(bed.checkout).format("DD MMM YYYY hh:mm A")
+                    : "N/A"}
+                </span>
               </div>
             </div>
-          </DialogDescription>
-        </DialogHeader>
+          </div>
+
+          {/* Images Section - Horizontal Scroll */}
+          {images.length > 0 && (
+            <div>
+              <span className="block font-medium text-gray-600 mb-2">
+                Images:
+              </span>
+              <div className="w-full overflow-x-auto flex gap-4">
+                {images.map((imgSrc, index) => (
+                  <div
+                    key={index}
+                    className="relative w-40 h-40 flex-shrink-0 border border-gray-300 rounded-lg overflow-hidden"
+                  >
+                    {imgSrc && (
+                      <Image
+                        src={imgSrc}
+                        alt={`Image ${index + 1}`}
+                        fill
+                        className="object-cover cursor-pointer"
+                        onClick={() => handleImageClick(index)}
+                      />
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Purpose */}
+          <div>
+            <div className="flex items-center justify-between mt-4">
+              <span className="font-medium text-gray-600">Purpose:</span>
+              <span className="text-gray-700">{bed.purpose || "N/A"}</span>
+            </div>
+          </div>
+        </div>
       </DialogContent>
 
+      {/*
+        Preview Modal:
+        - Zoom with mouse wheel
+        - Drag to pan the image
+      */}
       {previewImageIndex !== null && (
-        <Dialog open={true}>
+        <Dialog open>
           <DialogContent
-            className="w-full flex flex-col items-center"
+            className="w-full max-w-md sm:max-w-lg mx-auto flex flex-col items-center space-y-4 p-4"
             onClick={handleClosePreview}
           >
-            {images[previewImageIndex] && (
-              <Image
-                src={images[previewImageIndex]}
-                alt="Preview"
-                width={200}
-                height={100}
-                className="w-full h-auto rounded-lg"
-                onClick={(e) => e.stopPropagation()}
-              />
-            )}
-            <div className="mt-4 flex justify-between w-full">
+            {/*
+              Zoomable + Draggable Container
+              - Remove "overflow-auto" or "overflow-scroll" so we can do the drag ourselves
+              - We'll do overflow-hidden to hide any extra image area
+            */}
+            <div
+              className="relative w-72 h-72 sm:w-80 sm:h-80 overflow-hidden border border-gray-200"
+              // Prevent click on background from closing modal
+              onClick={(e) => e.stopPropagation()}
+              // Mouse wheel for zoom
+              onWheel={handleWheelZoom}
+              // Mouse events for drag
+              onMouseDown={handleMouseDown}
+              onMouseMove={handleMouseMove}
+              onMouseUp={handleMouseUpOrLeave}
+              onMouseLeave={handleMouseUpOrLeave}
+              style={{
+                cursor:
+                  zoomLevel > 1
+                    ? isDragging
+                      ? "grabbing"
+                      : "grab"
+                    : "default",
+              }}
+            >
+              {images[previewImageIndex] && (
+                <div
+                  className="absolute top-0 left-0"
+                  style={{
+                    transform: `
+                      translate(${translate.x}px, ${translate.y}px)
+                      scale(${zoomLevel})
+                    `,
+                    transformOrigin: "0 0", // top-left origin for simpler drag math
+                    width: "100%",
+                    height: "100%",
+                  }}
+                >
+                  <Image
+                    src={images[previewImageIndex]}
+                    alt="Preview"
+                    fill
+                    className="object-contain"
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Navigation Buttons (Previous, Close, Next) */}
+            <div
+              className="flex w-full justify-evenly"
+              onClick={(e) => e.stopPropagation()}
+            >
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   handlePrevImage();
                 }}
-                className="py-2 px-4 bg-gray-700 text-white rounded-lg"
+                className="py-2 px-4 bg-gray-700 text-white rounded-lg hover:bg-gray-800"
               >
                 Previous
               </button>
               <button
                 onClick={(e) => {
+                  e.stopPropagation();
                   handleClosePreview();
                 }}
-                className="py-2 px-4 bg-gray-700 text-white rounded-lg"
+                className="py-2 px-4 bg-red-500 text-white rounded-lg hover:bg-red-600"
               >
                 Close
               </button>
@@ -194,17 +329,11 @@ export default function UserBedDetailsCard({ bed, children }: IUserCard) {
                   e.stopPropagation();
                   handleNextImage();
                 }}
-                className="py-2 px-4 bg-gray-700 text-white rounded-lg"
+                className="py-2 px-4 bg-gray-700 text-white rounded-lg hover:bg-gray-800"
               >
                 Next
               </button>
             </div>
-            {/* <button
-              onClick={handleClosePreview}
-              className="mt-4 py-2 px-4 bg-gray-700 text-white rounded-lg"
-            >
-              Close Preview
-            </button> */}
           </DialogContent>
         </Dialog>
       )}

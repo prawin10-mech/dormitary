@@ -13,6 +13,7 @@ export interface HistoryRecord {
   name: string;
   phone: string;
   createdAt: string;
+  checkout: string;
   aadharFront?: string;
   aadharBack?: string;
   photo?: string;
