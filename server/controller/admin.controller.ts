@@ -3,6 +3,7 @@ import bcrypt from "bcrypt";
 import AdminModel from "../models/admin.model";
 import { generateJwtToken } from "../functions/generateJwtToken";
 import { CustomAdminRequest } from "../functions/CustomRequest";
+import { sendNotificationToToken } from "../utils/sendNotification";
 
 export const getAdminDetails = async (req: Request, res: Response) => {
   try {
@@ -61,6 +62,38 @@ export const AdminSignup = async (req: Request, res: Response) => {
     await newAdmin.save();
 
     return res.json({ message: "Admin created Successfully", admin: newAdmin });
+  } catch (error) {
+    return res.status(500).json({ message: "Something went wrong", error });
+  }
+};
+
+export const AddTokenToAdmin = async (req: Request, res: Response) => {
+  try {
+    const { token } = req.body;
+    const email = (req as CustomAdminRequest).adminId;
+    const admin = await AdminModel.findOne({ email });
+
+    if (admin) {
+      admin.fcmToken = token;
+      await admin.save();
+      return res
+        .status(404)
+        .json({ message: "Admin with this email already found" });
+    }
+
+    return res.json({ message: "Token Added Successfully", admin });
+  } catch (error) {
+    return res.status(500).json({ message: "Something went wrong", error });
+  }
+};
+
+export const sendNotification = async (req: Request, res: Response) => {
+  try {
+    sendNotificationToToken(
+      "fqn_Y14E3SbpAS-v7tSmHY:APA91bHHQJCn1VVKSwKV_NBWVbWcek5O8fgyfFVTQ03cN4rEluu3iDP8PcMWH8zoZRNt4H2OF6cHaXOyEirkoLQA_U7KkjuONyIMk5JmW9w3jrQ1bLwznwQ"
+    );
+
+    return res.json({ message: "send" });
   } catch (error) {
     return res.status(500).json({ message: "Something went wrong", error });
   }

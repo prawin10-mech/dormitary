@@ -116,11 +116,13 @@ export default function UserCard({ bed, children }: IUserCard) {
 
         {/* Main Modal: Bed & Customer Info */}
         <DialogContent className="max-w-xl p-6">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-bold">
+          <DialogHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
+            <DialogTitle className="text-lg font-bold sm:text-xl">
               Bed Information
             </DialogTitle>
-            <DialogDescription className="text-gray-600 mt-2">
+
+            {/* You can optionally remove or adjust this margin for spacing on small screens */}
+            <DialogDescription className="text-gray-600 text-sm sm:text-base sm:mt-0">
               Detailed information about the selected bed.
             </DialogDescription>
           </DialogHeader>
@@ -128,18 +130,18 @@ export default function UserCard({ bed, children }: IUserCard) {
           <div className="space-y-4">
             {/* Bed Details */}
             <div className="flex flex-col gap-2">
-              <div className="flex justify-between">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center">
                 <span className="font-medium text-gray-700">Bed Name:</span>
                 <span>{bed.bed}</span>
               </div>
-              <div className="flex justify-between">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center">
                 <span className="font-medium text-gray-700">Type:</span>
                 <span>{bed.type}</span>
               </div>
 
               {bed.isOccupied && (
                 <>
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center">
                     <span className="font-medium text-gray-600">Check In:</span>
                     <span className="text-gray-700">
                       {bed.occupiedDate
@@ -148,7 +150,7 @@ export default function UserCard({ bed, children }: IUserCard) {
                     </span>
                   </div>
 
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center">
                     <span className="font-medium text-gray-600">
                       Check Out:
                     </span>
@@ -166,15 +168,13 @@ export default function UserCard({ bed, children }: IUserCard) {
                   </div>
                 </>
               )}
-
-              {/* Add period or other bed details here if desired */}
             </div>
 
             {/* Customer Details */}
             {bed.customer && (
               <>
                 <div className="text-gray-700 font-bold">Customer Details:</div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <span className="block text-sm font-medium text-gray-700">
                       Name:
@@ -226,7 +226,7 @@ export default function UserCard({ bed, children }: IUserCard) {
           </div>
 
           {/* Footer: Check Out button */}
-          <DialogFooter>
+          <DialogFooter className="flex flex-col sm:flex-row sm:justify-end space-y-2 sm:space-y-0 sm:space-x-2 mt-4">
             {bed.isOccupied && (
               <button
                 onClick={handleCheckout}

@@ -5,6 +5,9 @@ import Bed from "./components/Bed";
 import Header from "@/components/Header";
 import { useGlobalContext } from "@/lib/useGlobalContext";
 import { useEffect } from "react";
+import useForegroundNotifications from "../hooks/userForegroundNotifications";
+import RequestPushPermission from "@/components/RequestPushPermission";
+import BedStats from "./components/BedStats";
 
 export default function Home() {
   const { beds, getBeds } = useGlobalContext();
@@ -13,11 +16,32 @@ export default function Home() {
     getBeds();
   }, []);
 
+  useEffect(() => {
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker
+        .register("/firebase-messaging-sw.js")
+        .then((registration) => {
+          console.log(
+            "Service Worker registered with scope:",
+            registration.scope
+          );
+        })
+        .catch((err) => {
+          console.error("Service Worker registration failed:", err);
+        });
+    }
+  }, []);
+
+  useForegroundNotifications();
+
   return (
     <div className="flex flex-col  scrollbar-width: none;">
       <div className="w-full bg-white shadow-lg rounded-lg mb-4 md:mb-0">
         <Header />
       </div>
+
+      <BedStats />
+
       <div className="flex flex-col lg:flex-row p-4 bg-gray-100 min-h-screen">
         <div className="w-full lg:w-1/3 p-4 bg-white shadow-lg rounded-lg mb-4 md:mb-0">
           <h1 className="text-2xl font-bold mb-4">Welcome</h1>
@@ -101,6 +125,7 @@ export default function Home() {
           </div>
         </div>
       </div>
+      {/* <RequestPushPermission /> */}
     </div>
   );
 }
