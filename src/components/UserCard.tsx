@@ -247,6 +247,14 @@ export default function UserCard({ bed, children }: IUserCard) {
               <div className="flex items-center justify-between">
                 <span className="font-medium text-gray-600">Check Out:</span>
                 <span className="text-gray-700">
+                  {bed?.occupiedDate
+                    ? dayjs(bed?.occupiedDate).format("DD MMM YYYY hh:mm A")
+                    : "N/A"}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="font-medium text-gray-600">Check Out:</span>
+                <span className="text-gray-700">
                   {bed?.customer?.checkout
                     ? dayjs(bed?.customer?.checkout).format(
                         "DD MMM YYYY hh:mm A"
