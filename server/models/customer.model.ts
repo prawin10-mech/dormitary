@@ -31,7 +31,7 @@ const schema = new Schema<ICustomer, Model<ICustomer>>(
     paymentType: {
       type: String,
       required: [true, "Payment Type is Required"],
-      enum: ["UPI", "Cash"],
+      enum: ["UPI", "Cash", "Not Paid"],
     },
     period: {
       type: String,

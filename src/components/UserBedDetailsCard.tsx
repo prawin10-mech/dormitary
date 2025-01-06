@@ -195,6 +195,14 @@ export default function UserBedDetailsCard({ bed, children }: IUserCard) {
                 <span className="text-gray-700">{bed.email || "N/A"}</span>
               </div>
               <div className="flex items-center justify-between">
+                <span className="font-medium text-gray-600">Check In:</span>
+                <span className="text-gray-700">
+                  {bed.bed.occupiedDate
+                    ? dayjs(bed.bed.occupiedDate).format("DD MMM YYYY hh:mm A")
+                    : "N/A"}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
                 <span className="font-medium text-gray-600">Check Out:</span>
                 <span className="text-gray-700">
                   {bed.checkout
