@@ -33,6 +33,8 @@
     "dotenv": "^16.4.5",
     "dotenv-cli": "^7.4.2",
     "express": "^4.19.2",
+    "firebase": "^11.1.0",
+    "firebase-admin": "^13.0.2",
     "gsap": "^3.12.5",
     "html-pdf-node-ts": "^1.0.7",
     "html2pdf.js": "^0.10.2",
