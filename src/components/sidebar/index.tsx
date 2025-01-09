@@ -52,6 +52,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
           <li>
             <TransitionLink href="/history" label="History" />
           </li>
+          <li>
+            <TransitionLink href="/user_history" label="User History" />
+          </li>
         </ul>
       </nav>
     </div>
