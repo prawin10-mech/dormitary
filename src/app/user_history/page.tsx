@@ -37,7 +37,7 @@ export default function Page() {
   };
 
   return (
-    <div className="p-4">
+    <div className="">
       <div className="w-full bg-white shadow-lg rounded-lg mb-4 md:mb-0">
         <Header />
       </div>
