@@ -185,3 +185,17 @@ export const getCustomerDetails = async (req: Request, res: Response) => {
     return res.status(500).json({ message: "Something went wrong", error });
   }
 };
+
+export const getUserBookings = async (req: Request, res: Response) => {
+  try {
+    const { number } = req.params;
+    const bookings = await await customerModel
+      .find({ number })
+      .populate("bed")
+      .sort({ createdAt: -1 });
+    res.status(200).json(bookings);
+  } catch (error) {
+    console.error("Error getting user history:", error);
+    return res.status(500).json({ message: "Something went wrong", error });
+  }
+};

@@ -3,6 +3,7 @@ import authentication from "../middlewares/authenticate";
 import {
   AllocateBed,
   getCustomerDetails,
+  getUserBookings,
 } from "../controller/customer.controller";
 
 const CustomerRouter = Router();
@@ -15,3 +16,5 @@ CustomerRouter.get(
   authentication,
   getCustomerDetails
 );
+
+CustomerRouter.get("/user_bookings/:number", authentication, getUserBookings);

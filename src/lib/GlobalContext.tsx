@@ -22,6 +22,7 @@ interface State {
   history: any | null;
   customer: ICustomer | null;
   isAuthenticated: boolean;
+  bookings: any[];
 }
 
 type Action =
@@ -35,7 +36,8 @@ type Action =
   | { type: "CHECKOUT_BED"; payload: { bed: any; customer: any } }
   | { type: "GET_BEDS"; payload: { beds: any[] } }
   | { type: "GET_CUSTOMER_DETAILS"; payload: { customer: ICustomer | null } }
-  | { type: "GET_BEDS_HISTORY"; payload: { history: any | null } };
+  | { type: "GET_BEDS_HISTORY"; payload: { history: any | null } }
+  | { type: "USER_BOOKINGS"; payload: { bookings: any | null } };
 
 const initialState: State = {
   admin: null,
@@ -43,6 +45,7 @@ const initialState: State = {
   history: null,
   customer: null,
   isAuthenticated: false,
+  bookings: [],
 };
 
 const reducer = (state: State, action: Action): State => {
@@ -90,6 +93,11 @@ const reducer = (state: State, action: Action): State => {
       return {
         ...state,
         history: action.payload.history,
+      };
+    case "USER_BOOKINGS":
+      return {
+        ...state,
+        bookings: action.payload.bookings,
       };
     default:
       return state;
@@ -154,6 +162,8 @@ interface GlobalContextType {
   }>;
   getBeds: () => Promise<{ beds: any[]; error?: string }>;
   beds: any;
+  getUserBookings: (body: { number: string }) => Promise<{ bookings: any[] }>;
+  bookings: any[];
 }
 
 export const GlobalContext = createContext<GlobalContextType | null>(null);
@@ -475,6 +485,38 @@ export function GlobalContextProvider({
     }
   }, []);
 
+  const getUserBookings = useCallback(
+    async (body: { number: string }) => {
+      try {
+        let accessToken = storageAvailable ? Cookies.get("accessToken") : "";
+
+        const { data } = await axios.get(
+          `${process.env.NEXT_PUBLIC_BASE_URL}/customer/user_bookings/${body.number}`,
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+          }
+        );
+        console.log(data);
+
+        dispatch({
+          type: "USER_BOOKINGS",
+          payload: { bookings: data },
+        });
+
+        return { bookings: data };
+      } catch (error: any) {
+        if (error.response?.status === 401) {
+          Cookies.remove("accessToken");
+          router.push("/login");
+        }
+        throw new Error(error.response?.data.message || "Something went wrong");
+      }
+    },
+    [storageAvailable]
+  );
+
   useEffect(() => {
     initialize();
   }, [initialize]);
@@ -499,6 +541,8 @@ export function GlobalContextProvider({
       history: state.history,
       getBedHistory,
       checkOutBed,
+      getUserBookings,
+      bookings: state.bookings,
     }),
     [
       state.admin,
@@ -515,6 +559,8 @@ export function GlobalContextProvider({
       state.history,
       getBedHistory,
       checkOutBed,
+      getUserBookings,
+      state.bookings,
     ]
   );
 
