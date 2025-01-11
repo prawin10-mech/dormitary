@@ -1,19 +1,19 @@
 // server/sendNotification.ts (Node.js environment, not Next.js SSR)
 import admin from "firebase-admin";
-// import serviceAccount from "./serviceAccountKey.json";
+import serviceAccount from "./serviceAccountKey.json";
 
 
-const serviceAccount = {
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  privateKey: process.env.NEXT_PUBLIC_FIREBASE_PRIVATE_KEY,
-  clientEmail: process.env.NEXT_PUBLIC_FIREBASE_CLIENT_EMAIL,
+// const serviceAccount = {
+//   projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+//   privateKey: process.env.NEXT_PUBLIC_FIREBASE_PRIVATE_KEY,
+//   clientEmail: process.env.NEXT_PUBLIC_FIREBASE_CLIENT_EMAIL,
 
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-};
+//   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+//   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+//   storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+//   messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_SENDER_ID,
+//   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+// };
 
 
 admin.initializeApp({
