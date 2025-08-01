@@ -7,34 +7,30 @@ import toast, { ToastBar, Toaster } from "react-hot-toast";
 import Image from "next/image";
 
 interface IFormInput {
-  name: string;
-  number: string;
-  email: string;
-  age: number;
-  photo: FileList;
-  aadharFront: FileList;
-  aadharBack: FileList;
-  bed: string;
-  period: string;
-  purpose: string;
-  paymentType: string;
+  name?: string;
+  number: string; // *
+  email?: string;
+  age?: number;
+  photo: FileList; // *
+  aadharFront: FileList; // *
+  aadharBack: FileList; // *
+  bed: string; // *
+  period?: string;
+  purpose?: string;
+  paymentType?: string;
 }
 
 const resolver: Resolver<IFormInput> = async (values) => {
   const errors: FieldErrors<IFormInput> = {};
-  if (!values.name) {
-    errors.name = {
-      type: "required",
-      message: "Customer Name is required.",
-    };
-  }
-
+  
+  // Required fields validation
   if (!values.bed) {
     errors.bed = {
       type: "required",
       message: "Bed is required.",
     };
   }
+  
   if (!values.number) {
     errors.number = {
       type: "required",
@@ -49,45 +45,13 @@ const resolver: Resolver<IFormInput> = async (values) => {
     };
   }
 
-  if (!values.paymentType) {
-    errors.number = {
-      type: "required",
-      message: "Payment Type is required.",
-    };
-  }
-
-  if (!values.period) {
-    errors.number = {
-      type: "required",
-      message: "Period is required.",
-    };
-  }
-  if (values.email && !/^\S+@\S+$/i.test(values.email)) {
-    errors.email = {
-      type: "pattern",
-      message: "Invalid email address.",
-    };
-  }
-  if (!values.age || values.age < 16) {
-    errors.age = {
-      type: "min",
-      message: "Customer Age must be at least 16.",
-    };
-  }
-
-  if (!values.purpose) {
-    errors.purpose = {
-      type: "required",
-      message: "Purpose is required.",
-    };
-  }
-
   if (!values.photo || values.photo.length === 0) {
     errors.photo = {
       type: "required",
       message: "Photo is required.",
     };
   }
+  
   if (!values.aadharFront || values.aadharFront.length === 0) {
     errors.aadharFront = {
       type: "required",
@@ -99,6 +63,21 @@ const resolver: Resolver<IFormInput> = async (values) => {
     errors.aadharBack = {
       type: "required",
       message: "Aadhar Back is required.",
+    };
+  }
+
+  // Optional field validations
+  if (values.email && !/^\S+@\S+$/i.test(values.email)) {
+    errors.email = {
+      type: "pattern",
+      message: "Invalid email address.",
+    };
+  }
+  
+  if (values.age && values.age < 16) {
+    errors.age = {
+      type: "min",
+      message: "Customer Age must be at least 16.",
     };
   }
 
@@ -132,9 +111,25 @@ const Form = () => {
 
   const onSubmit: SubmitHandler<IFormInput> = (values) => {
     console.log(values);
+    
+    // Prepare data with default values for optional fields
+    const formData = {
+      name: values.name || "",
+      email: values.email || "",
+      number: values.number,
+      age: values.age || 0,
+      photo: values.photo,
+      aadharFront: values.aadharFront,
+      aadharBack: values.aadharBack,
+      bed: values.bed,
+      period: values.period || "Day",
+      purpose: values.purpose || "",
+      paymentType: values.paymentType || "Not Paid",
+    };
+    
     toast
       .promise(
-        allocateBed(values),
+        allocateBed(formData),
         {
           loading: "Allocating bed Please wait",
           success: () => `Bed Allocated`,
@@ -179,13 +174,13 @@ const Form = () => {
         const { customer } = await getCustomerDetails(number);
 
         if (customer) {
-          setValue("name", customer.name);
+          setValue("name", customer.name || "");
           setValue("email", customer.email || "");
-          setValue("age", customer.age);
+          setValue("age", customer.age || 0);
           setValue("bed", customer.bed.bed);
-          setValue("period", customer.period);
-          setValue("paymentType", customer.paymentType);
-          setValue("purpose", customer.purpose);
+          setValue("period", customer.period || "");
+          setValue("paymentType", customer.paymentType || "");
+          setValue("purpose", customer.purpose || "");
 
           if (customer.photo) {
             const photoBlob = await fetch(customer.photo).then((res) =>
@@ -250,7 +245,7 @@ const Form = () => {
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div>
-        <label className="block text-gray-700">Customer Number</label>
+        <label className="block text-gray-700">Customer Number *</label>
         <input
           type="text"
           {...register("number")}
@@ -275,7 +270,7 @@ const Form = () => {
         )}
       </div>
       <div>
-        <label className="block text-gray-700 font-medium mb-2">Bed</label>
+        <label className="block text-gray-700 font-medium mb-2">Bed *</label>
         <select
           {...register("bed")}
           className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition ease-in-out duration-150"
@@ -390,7 +385,7 @@ const Form = () => {
       </div>
 
       <div>
-        <label className="block text-gray-700">Photo</label>
+        <label className="block text-gray-700">Photo *</label>
         <input
           type="file"
           {...register("photo")}
@@ -416,7 +411,7 @@ const Form = () => {
         )}
       </div>
       <div>
-        <label className="block text-gray-700">Aadhar</label>
+        <label className="block text-gray-700">Aadhar Front *</label>
         <input
           type="file"
           accept="image/*"
@@ -443,7 +438,7 @@ const Form = () => {
       </div>
 
       <div>
-        <label className="block text-gray-700">Aadhar Back</label>
+        <label className="block text-gray-700">Aadhar Back *</label>
         <input
           type="file"
           accept="image/*"

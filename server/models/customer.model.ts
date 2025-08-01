@@ -1,42 +1,44 @@
 import { Document, model, Model, Schema, Types } from "mongoose";
 
 export interface ICustomer extends Document {
-  name: string;
+  name?: string;
   email?: string;
-  number: string;
-  age: number;
-  photo: string;
-  aadharFront: string;
-  aadharBack: string;
-  bed: Types.ObjectId;
+  number: string; // *
+  age?: number;
+  photo: string; // *
+  aadharFront: string; // *
+  aadharBack: string; // *
+  bed: Types.ObjectId; // *
   createdAt?: Date;
   updatedAt?: Date;
   checkOutAt?: Date;
-  period: string;
-  purpose: string;
-  paymentType: string;
+  period?: string;
+  purpose?: string;
+  paymentType?: string;
 }
 
 const schema = new Schema<ICustomer, Model<ICustomer>>(
   {
-    name: { type: String, required: [true, "Name is Required"] },
+    name: { type: String },
     email: { type: String },
     number: { type: String, required: [true, "Phone Number is Required"] },
-    age: { type: Number, required: [true, "Age is Required"] },
+    age: { type: Number },
     photo: { type: String, required: [true, "Photo is Required"] },
     aadharFront: { type: String, required: [true, "Aadhar Front is Required"] },
     aadharBack: { type: String, required: [true, "Aadhar Back is Required"] },
-    purpose: { type: String, required: [true, "Purpose is Required"] },
-    checkOutAt: { type: Date },
+    purpose: { type: String },
+    checkOutAt: { 
+      type: Date, 
+      default: () => new Date(Date.now() + 24 * 60 * 60 * 1000) 
+    },
     paymentType: {
       type: String,
-      required: [true, "Payment Type is Required"],
       enum: ["UPI", "Cash", "Not Paid"],
     },
     period: {
       type: String,
-      required: [true, "Period is Required"],
       enum: ["Day", "Month"],
+      default: "Day",
     },
     bed: {
       type: Schema.Types.ObjectId,
