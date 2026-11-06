@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "seed:admins": "node --env-file=.env.local scripts/seedAdmins.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
