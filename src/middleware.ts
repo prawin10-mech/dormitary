@@ -1,44 +1,28 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
+// Routes that require a signed-in admin.
+const protectedPaths = ["/", "/history", "/user_history"];
+
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const hasSession = Boolean(request.cookies.get("accessToken")?.value);
 
-  // Define public and restricted paths
-  const publicPaths = ["/login"];
-  const restrictedPaths = ["/dashboard", "/profile"]; // Add restricted routes if needed
-
-  // Retrieve token from cookies
-  const token = request.cookies.get("accessToken")?.value || "";
-
-  // Redirect logged-in users away from the login page
-  if (pathname === "/login" && token) {
+  // Signed-in users shouldn't see the login page.
+  if (pathname === "/login" && hasSession) {
     return NextResponse.redirect(new URL("/", request.url));
   }
 
-  // Redirect unauthenticated users away from restricted routes
-  if (restrictedPaths.includes(pathname) && !token) {
-    return NextResponse.redirect(new URL("/login", request.url));
+  // Gate protected pages. Real verification happens in the API routes;
+  // this is a fast UX redirect based on cookie presence.
+  if (protectedPaths.includes(pathname) && !hasSession) {
+    const loginUrl = new URL("/login", request.url);
+    return NextResponse.redirect(loginUrl);
   }
 
   return NextResponse.next();
 }
 
 export const config = {
-  // Define the list of paths
-  matcher: [
-    "/",
-    "/dashboard",
-    "/dashboard/products",
-    "/dashboard/products/:id",
-    "/dashboard/products/add_product",
-    "/dashboard/products/edit_product/:id",
-    "/dashboard/users",
-    "/dashboard/users/:id",
-    "/dashboard/users/add_user",
-    "/dashboard/users/edit_user/:id",
-    "/login",
-    "/signup",
-    "/add_product",
-  ],
+  matcher: ["/", "/history", "/user_history", "/login"],
 };

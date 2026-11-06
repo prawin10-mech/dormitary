@@ -1,3 +1,33 @@
+// Client-safe shapes (no mongoose). Mirror the server models in src/server/models.
+export interface IAdmin {
+  _id: string;
+  name: string;
+  email: string;
+  fcmToken?: string[];
+  profileImage?: string;
+  role: "ADMIN" | "USER" | "AGENT";
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface ICustomer {
+  _id: string;
+  name?: string;
+  email?: string;
+  number: string;
+  age?: number;
+  photo: string;
+  aadharFront: string;
+  aadharBack: string;
+  bed: any;
+  createdAt?: string;
+  updatedAt?: string;
+  checkOutAt?: string;
+  period?: "Day" | "Month";
+  purpose?: string;
+  paymentType?: "UPI" | "Cash" | "Not Paid";
+}
+
 export interface Bed {
   _id: string;
   bed: string;

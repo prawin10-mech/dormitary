@@ -5,12 +5,7 @@ const nextConfig = {
   // Native / heavy server-only deps used by the API route handlers.
   // Keeping them external prevents Next from trying to bundle them.
   experimental: {
-    serverComponentsExternalPackages: [
-      "mongoose",
-      "firebase-admin",
-      "bcrypt",
-      "@react-pdf/renderer",
-    ],
+    serverComponentsExternalPackages: ["mongoose"],
   },
 
   images: {
