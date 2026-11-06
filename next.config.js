@@ -1,4 +1,18 @@
-module.exports = {
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  reactStrictMode: true,
+
+  // Native / heavy server-only deps used by the API route handlers.
+  // Keeping them external prevents Next from trying to bundle them.
+  experimental: {
+    serverComponentsExternalPackages: [
+      "mongoose",
+      "firebase-admin",
+      "bcrypt",
+      "@react-pdf/renderer",
+    ],
+  },
+
   images: {
     remotePatterns: [
       {
@@ -10,3 +24,5 @@ module.exports = {
     ],
   },
 };
+
+module.exports = nextConfig;
