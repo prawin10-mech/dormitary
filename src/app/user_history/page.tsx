@@ -37,94 +37,71 @@ export default function Page() {
   };
 
   return (
-    <div className="">
-      <div className="w-full bg-white shadow-lg rounded-lg mb-4 md:mb-0">
-        <Header />
-      </div>
-      <div className="p-6 font-sans">
-        <h1 className="text-2xl font-bold mb-4">Booking Details</h1>
-        <div className="mb-4">
+    <div className="min-h-screen bg-slate-50">
+      <Header />
+      <main className="mx-auto w-full max-w-4xl px-4 py-5 sm:px-6">
+        <h1 className="mb-4 text-2xl font-bold text-slate-800">Booking lookup</h1>
+
+        <div className="flex flex-col gap-2 sm:flex-row">
           <input
-            type="text"
-            placeholder="Enter phone number"
+            type="tel"
+            inputMode="numeric"
+            placeholder="Enter 10-digit phone number"
             value={phoneNumber}
             onChange={(e) => setPhoneNumber(e.target.value)}
-            className="p-2 border rounded w-64 mr-2 text-lg"
+            onKeyDown={(e) => e.key === "Enter" && fetchBookings()}
+            className="flex-1 rounded-xl border border-slate-300 px-4 py-3 text-base focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
           <button
             onClick={fetchBookings}
-            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+            disabled={loading}
+            className="rounded-xl bg-indigo-600 px-5 py-3 font-semibold text-white transition hover:bg-indigo-700 disabled:opacity-60"
           >
-            {loading ? "Loading..." : "Fetch Bookings"}
+            {loading ? "Loading…" : "Search"}
           </button>
         </div>
-        {error && <p className="text-red-500">{error}</p>}
+        {error && <p className="mt-2 text-sm text-rose-600">{error}</p>}
+
         {bookings.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="table-auto w-full border-collapse border border-gray-300 mt-4">
-              <thead>
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    S. No
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Name
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Bed No
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Phone
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Check In
-                  </th>
-
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Check Out
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {bookings.map((booking, index) => (
-                  <tr key={booking._id}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {index + 1}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm cursor-pointer font-medium text-gray-900">
-                      <UserBedDetailsCard bed={booking}>
-                        {booking.name}
-                      </UserBedDetailsCard>
-                    </td>
-
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {booking?.bed?.bed || "-"}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {booking.number}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {booking.createdAt
-                        ? dayjs(booking.createdAt).format("DD MMM YYYY hh:mm A")
-                        : "N/A"}
-                    </td>
-
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {booking.createdAt
-                        ? dayjs(booking.createdAt)
-                            .add(1, "day")
-                            .format("DD MMM YYYY hh:mm A")
-                        : "N/A"}
-                    </td>
+          <div className="mt-5 overflow-hidden rounded-xl bg-white ring-1 ring-slate-200">
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-slate-200">
+                <thead className="bg-slate-50">
+                  <tr>
+                    {["S. No", "Name", "Bed", "Phone", "Check in", "Check out"].map((h) => (
+                      <th key={h} className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500">
+                        {h}
+                      </th>
+                    ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {bookings.map((booking, index) => (
+                    <tr key={booking._id} className="hover:bg-slate-50">
+                      <td className="px-4 py-3 text-sm font-medium text-slate-900">{index + 1}</td>
+                      <td className="px-4 py-3 text-sm font-medium text-indigo-600 underline-offset-2 hover:underline">
+                        <UserBedDetailsCard bed={booking}>{booking.name}</UserBedDetailsCard>
+                      </td>
+                      <td className="px-4 py-3 text-sm text-slate-500">{booking?.bed?.bed || "-"}</td>
+                      <td className="px-4 py-3 text-sm text-slate-500">{booking.number}</td>
+                      <td className="px-4 py-3 text-sm text-slate-500">
+                        {booking.createdAt ? dayjs(booking.createdAt).format("DD MMM YYYY hh:mm A") : "N/A"}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-slate-500">
+                        {booking.createdAt ? dayjs(booking.createdAt).add(1, "day").format("DD MMM YYYY hh:mm A") : "N/A"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         ) : (
-          <p>No bookings found.</p>
+          <div className="mt-5 flex h-40 items-center justify-center rounded-2xl border border-dashed border-slate-300 text-slate-400">
+            No bookings to show. Search by phone number.
+          </div>
         )}
-      </div>
+      </main>
     </div>
   );
 }

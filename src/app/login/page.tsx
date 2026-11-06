@@ -1,29 +1,23 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useGlobalContext } from "@/lib/useGlobalContext";
 import toast, { Toaster } from "react-hot-toast";
+import { Eye, EyeOff, Loader2, LogIn } from "lucide-react";
 
 const LoginSchema = z.object({
-  email: z.string().min(1, "Email is Required").email("Invalid email format"),
-  password: z
-    .string()
-    .min(1, "Password is Required")
-    .min(6, "Password must be greater than 6 characters"),
+  email: z.string().min(1, "Email is required").email("Enter a valid email"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
 type LoginFormInput = z.infer<typeof LoginSchema>;
 
 export default function Login() {
   const { adminLogin, initialize } = useGlobalContext();
-
-  const defaultValues = {
-    email: "",
-    password: "",
-  };
+  const [showPassword, setShowPassword] = useState(false);
 
   const {
     register,
@@ -31,87 +25,86 @@ export default function Login() {
     formState: { errors, isSubmitting },
   } = useForm<LoginFormInput>({
     resolver: zodResolver(LoginSchema),
-    defaultValues,
+    defaultValues: { email: "", password: "" },
   });
 
   const onSubmit: SubmitHandler<LoginFormInput> = async (values) => {
-    toast
-      .promise(
-        adminLogin(values),
-        {
-          loading: "Loading",
-          success: () => `Logged In Successfully`,
-          error: (err) => `This just happened: ${err.toString()}`,
-        },
-        {
-          style: {
-            minWidth: "250px",
-          },
-          success: {
-            duration: 5000,
-            icon: "🔥",
-          },
-        }
-      )
-      .then(() => {
-        initialize();
+    try {
+      await toast.promise(adminLogin(values), {
+        loading: "Signing in…",
+        success: "Welcome back!",
+        error: (err) => err?.toString() || "Login failed",
       });
+      await initialize();
+    } catch {
+      /* toast already showed the error */
+    }
   };
 
   return (
-    <div className="w-full h-screen flex justify-center items-center bg-gray-100">
-      <div className="max-w-sm w-full bg-white border border-gray-300 rounded-lg shadow-lg p-6">
-        <h2 className="text-2xl font-bold mb-6 text-center text-gray-900">
-          Login
-        </h2>
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <div className="mb-5">
-            <label
-              htmlFor="email"
-              className="block text-sm font-medium text-gray-700"
-            >
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-50 to-indigo-50 px-4">
+      <div className="w-full max-w-sm rounded-2xl bg-white p-7 shadow-xl ring-1 ring-slate-200">
+        <div className="mb-6 text-center">
+          <h1 className="bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-2xl font-extrabold text-transparent">
+            {process.env.NEXT_PUBLIC_TITLE || "Dormitary"}
+          </h1>
+          <p className="mt-1 text-sm text-slate-500">Sign in to continue</p>
+        </div>
+
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
+          <div>
+            <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-slate-700">
               Email
             </label>
             <input
               id="email"
+              type="email"
+              autoComplete="email"
               {...register("email")}
-              className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+              className="w-full rounded-xl border border-slate-300 px-4 py-3 text-base transition focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
             {errors.email && (
-              <span className="text-red-600 text-sm mt-1">
-                {errors.email.message}
-              </span>
+              <p className="mt-1 text-sm text-rose-600">{errors.email.message}</p>
             )}
           </div>
-          <div className="mb-6">
-            <label
-              htmlFor="password"
-              className="block text-sm font-medium text-gray-700"
-            >
+
+          <div>
+            <label htmlFor="password" className="mb-1.5 block text-sm font-medium text-slate-700">
               Password
             </label>
-            <input
-              id="password"
-              type="password"
-              {...register("password")}
-              className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-            />
+            <div className="relative">
+              <input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                autoComplete="current-password"
+                {...register("password")}
+                className="w-full rounded-xl border border-slate-300 px-4 py-3 pr-11 text-base transition focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((s) => !s)}
+                className="absolute inset-y-0 right-0 flex items-center px-3 text-slate-400 hover:text-slate-600"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
             {errors.password && (
-              <p className="text-red-600 text-sm mt-1">
-                {errors.password.message}
-              </p>
+              <p className="mt-1 text-sm text-rose-600">{errors.password.message}</p>
             )}
           </div>
+
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full px-4 py-2 bg-indigo-600 text-white font-semibold rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-3 font-semibold text-white transition hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-60"
           >
-            {isSubmitting ? "Logging In.." : "Log In"}
+            {isSubmitting ? <Loader2 size={18} className="animate-spin" /> : <LogIn size={18} />}
+            {isSubmitting ? "Signing in…" : "Sign in"}
           </button>
         </form>
       </div>
-      <Toaster />
+      <Toaster position="top-center" />
     </div>
   );
 }
