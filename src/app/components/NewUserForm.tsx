@@ -24,8 +24,8 @@ interface IFormInput {
 type ImgKey = "photo" | "aadharFront" | "aadharBack";
 
 const inputClass =
-  "w-full px-4 py-3 border border-gray-300 rounded-xl text-base bg-white transition focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500";
-const labelClass = "block text-sm font-medium text-gray-700 mb-1.5";
+  "w-full px-4 py-3 border border-slate-300 rounded-xl text-base bg-white transition focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500";
+const labelClass = "block text-sm font-medium text-slate-700 mb-1.5";
 
 function fileListFrom(file: File): FileList {
   const dt = new DataTransfer();
@@ -186,11 +186,14 @@ const Form = () => {
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       {/* 1. Aadhaar scan */}
       <section>
-        <SectionTitle icon={<ScanLine size={18} />} title="Scan Aadhaar" hint="Front side auto-fills the form" />
+        <SectionTitle icon={<ScanLine size={18} />} title="Scan Aadhaar *" hint="Front side auto-fills the form" />
         <div className="grid grid-cols-2 gap-3">
-          <CaptureTile label="Aadhaar front" preview={previews.aadharFront} onPick={onImgInput("aadharFront")} busy={ocrState.status === "reading"} />
-          <CaptureTile label="Aadhaar back" preview={previews.aadharBack} onPick={onImgInput("aadharBack")} />
+          <CaptureTile label="Aadhaar front" preview={previews.aadharFront} onPick={onImgInput("aadharFront")} busy={ocrState.status === "reading"} required />
+          <CaptureTile label="Aadhaar back" preview={previews.aadharBack} onPick={onImgInput("aadharBack")} required />
         </div>
+        <p className="mt-2 text-xs text-slate-500">
+          Guest photo and both Aadhaar sides are required to allocate a bed.
+        </p>
 
         {ocrState.status === "reading" && (
           <div className="mt-3 flex items-center gap-2 text-sm text-indigo-600">
@@ -205,8 +208,8 @@ const Form = () => {
 
       {/* 2. Guest photo */}
       <section>
-        <SectionTitle icon={<UserRound size={18} />} title="Guest photo" />
-        <CaptureTile label="Take / upload photo" preview={previews.photo} onPick={onImgInput("photo")} wide />
+        <SectionTitle icon={<UserRound size={18} />} title="Guest photo *" />
+        <CaptureTile label="Take / upload photo" preview={previews.photo} onPick={onImgInput("photo")} wide required />
       </section>
 
       {/* 3. Guest details */}
@@ -293,10 +296,10 @@ const Form = () => {
 function SectionTitle({ icon, title, hint }: { icon?: React.ReactNode; title: string; hint?: string }) {
   return (
     <div className="flex items-center justify-between mb-3">
-      <h3 className="flex items-center gap-2 text-sm font-semibold text-gray-800 uppercase tracking-wide">
+      <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-800 uppercase tracking-wide">
         {icon}{title}
       </h3>
-      {hint && <span className="text-xs text-gray-500">{hint}</span>}
+      {hint && <span className="text-xs text-slate-500">{hint}</span>}
     </div>
   );
 }
@@ -307,19 +310,22 @@ function CaptureTile({
   onPick,
   busy,
   wide,
+  required,
 }: {
   label: string;
   preview: string | null;
   onPick: (e: React.ChangeEvent<HTMLInputElement>) => void;
   busy?: boolean;
   wide?: boolean;
+  required?: boolean;
 }) {
   const ref = useRef<HTMLInputElement>(null);
   return (
     <button
       type="button"
       onClick={() => ref.current?.click()}
-      className={`relative flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-gray-300 hover:border-indigo-400 bg-gray-50 hover:bg-indigo-50/40 transition overflow-hidden ${
+      aria-label={required ? `${label} (required)` : label}
+      className={`relative flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-300 hover:border-indigo-400 bg-slate-50 hover:bg-indigo-50/40 transition overflow-hidden focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
         wide ? "h-40 w-full max-w-xs" : "h-32 w-full"
       }`}
     >
@@ -335,8 +341,11 @@ function CaptureTile({
         </>
       ) : (
         <>
-          <Camera className="text-gray-400" />
-          <span className="text-xs text-gray-500 px-2 text-center">{label}</span>
+          <Camera className="text-slate-400" />
+          <span className="text-xs text-slate-500 px-2 text-center">
+            {label}
+            {required && <span className="text-rose-500"> *</span>}
+          </span>
         </>
       )}
       <input
@@ -374,8 +383,8 @@ function DetectedPanel({ fields }: { fields: AadhaarFields }) {
       </p>
       <div className="flex flex-wrap gap-2">
         {chips.map((c) => (
-          <span key={c.label} className="text-xs bg-white border border-indigo-200 rounded-full px-2.5 py-1 text-gray-700">
-            <span className="text-gray-400">{c.label}:</span> {c.value}
+          <span key={c.label} className="text-xs bg-white border border-indigo-200 rounded-full px-2.5 py-1 text-slate-700">
+            <span className="text-slate-400">{c.label}:</span> {c.value}
           </span>
         ))}
       </div>

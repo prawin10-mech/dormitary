@@ -36,7 +36,7 @@ export default function UserBedDetailsCard({ bed, children }: IUserCard) {
 
   if (!bed) {
     return (
-      <div className="text-center text-gray-500">
+      <div className="text-center text-slate-500">
         Information is incomplete.
       </div>
     );
@@ -133,7 +133,7 @@ export default function UserBedDetailsCard({ bed, children }: IUserCard) {
   return (
     <Dialog>
       <DialogTrigger>
-        <div className="cursor-pointer hover:bg-gray-100 p-2 rounded-md">
+        <div className="cursor-pointer hover:bg-slate-100 p-2 rounded-md">
           {children}
         </div>
       </DialogTrigger>
@@ -145,8 +145,8 @@ export default function UserBedDetailsCard({ bed, children }: IUserCard) {
         - Make sure content remains visible
       */}
       <DialogContent className="w-full max-w-xl sm:max-w-2xl px-4 py-6">
-        <DialogHeader className="border-b border-gray-200 pb-3">
-          <DialogTitle className="text-xl font-semibold">
+        <DialogHeader className="border-b border-slate-200 pb-3">
+          <DialogTitle className="text-xl font-semibold text-slate-800">
             Bed Information
           </DialogTitle>
         </DialogHeader>
@@ -159,52 +159,52 @@ export default function UserBedDetailsCard({ bed, children }: IUserCard) {
           {/* Bed Details */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <span className="font-medium text-gray-600">Bed Name:</span>
-              <span className="text-gray-700">{bed.bed.bed}</span>
+              <span className="font-medium text-slate-500">Bed Name:</span>
+              <span className="text-slate-800">{bed.bed.bed}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="font-medium text-gray-600">Type:</span>
-              <span className="text-gray-700">{bed.bed.type}</span>
+              <span className="font-medium text-slate-500">Type:</span>
+              <span className="text-slate-800">{bed.bed.type}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="font-medium text-gray-600">Period:</span>
-              <span className="text-gray-700">{bed.period || "N/A"}</span>
+              <span className="font-medium text-slate-500">Period:</span>
+              <span className="text-slate-800">{bed.period || "N/A"}</span>
             </div>
           </div>
 
           {/* Customer Details */}
           <div>
-            <span className="block font-medium text-gray-600 mb-2">
+            <span className="block font-medium text-slate-500 mb-2">
               Customer Details:
             </span>
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <span className="font-medium text-gray-600">Name:</span>
-                <span className="text-gray-700">{bed.name || "N/A"}</span>
+                <span className="font-medium text-slate-500">Name:</span>
+                <span className="text-slate-800">{bed.name || "N/A"}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="font-medium text-gray-600">Phone:</span>
-                <span className="text-gray-700">{bed.number || "N/A"}</span>
+                <span className="font-medium text-slate-500">Phone:</span>
+                <span className="text-slate-800">{bed.number || "N/A"}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="font-medium text-gray-600">Age:</span>
-                <span className="text-gray-700">{bed.age || "N/A"}</span>
+                <span className="font-medium text-slate-500">Age:</span>
+                <span className="text-slate-800">{bed.age || "N/A"}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="font-medium text-gray-600">Email:</span>
-                <span className="text-gray-700">{bed.email || "N/A"}</span>
+                <span className="font-medium text-slate-500">Email:</span>
+                <span className="text-slate-800">{bed.email || "N/A"}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="font-medium text-gray-600">Check In:</span>
-                <span className="text-gray-700">
+                <span className="font-medium text-slate-500">Check In:</span>
+                <span className="text-slate-800">
                   {bed.bed.occupiedDate
                     ? dayjs(bed.bed.occupiedDate).format("DD MMM YYYY hh:mm A")
                     : "N/A"}
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="font-medium text-gray-600">Check Out:</span>
-                <span className="text-gray-700">
+                <span className="font-medium text-slate-500">Check Out:</span>
+                <span className="text-slate-800">
                   {bed.checkout
                     ? dayjs(bed.checkout).format("DD MMM YYYY hh:mm A")
                     : "N/A"}
@@ -216,14 +216,14 @@ export default function UserBedDetailsCard({ bed, children }: IUserCard) {
           {/* Images Section - Horizontal Scroll */}
           {images.length > 0 && (
             <div>
-              <span className="block font-medium text-gray-600 mb-2">
+              <span className="block font-medium text-slate-500 mb-2">
                 Images:
               </span>
               <div className="w-full overflow-x-auto flex gap-4">
                 {images.map((imgSrc, index) => (
                   <div
                     key={index}
-                    className="relative w-40 h-40 flex-shrink-0 border border-gray-300 rounded-lg overflow-hidden"
+                    className="relative w-40 h-40 flex-shrink-0 border border-slate-200 rounded-lg overflow-hidden"
                   >
                     {imgSrc && (
                       <Image
@@ -243,8 +243,8 @@ export default function UserBedDetailsCard({ bed, children }: IUserCard) {
           {/* Purpose */}
           <div>
             <div className="flex items-center justify-between mt-4">
-              <span className="font-medium text-gray-600">Purpose:</span>
-              <span className="text-gray-700">{bed.purpose || "N/A"}</span>
+              <span className="font-medium text-slate-500">Purpose:</span>
+              <span className="text-slate-800">{bed.purpose || "N/A"}</span>
             </div>
           </div>
         </div>
@@ -267,7 +267,7 @@ export default function UserBedDetailsCard({ bed, children }: IUserCard) {
               - We'll do overflow-hidden to hide any extra image area
             */}
             <div
-              className="relative w-72 h-72 sm:w-80 sm:h-80 overflow-hidden border border-gray-200"
+              className="relative w-72 h-72 sm:w-80 sm:h-80 overflow-hidden rounded-lg border border-slate-200"
               // Prevent click on background from closing modal
               onClick={(e) => e.stopPropagation()}
               // Mouse wheel for zoom
@@ -319,7 +319,7 @@ export default function UserBedDetailsCard({ bed, children }: IUserCard) {
                   e.stopPropagation();
                   handlePrevImage();
                 }}
-                className="py-2 px-4 bg-gray-700 text-white rounded-lg hover:bg-gray-800"
+                className="py-2 px-4 bg-slate-700 text-white rounded-xl transition hover:bg-slate-800"
               >
                 Previous
               </button>
@@ -328,7 +328,7 @@ export default function UserBedDetailsCard({ bed, children }: IUserCard) {
                   e.stopPropagation();
                   handleClosePreview();
                 }}
-                className="py-2 px-4 bg-red-500 text-white rounded-lg hover:bg-red-600"
+                className="py-2 px-4 bg-rose-600 text-white rounded-xl transition hover:bg-rose-700"
               >
                 Close
               </button>
@@ -337,7 +337,7 @@ export default function UserBedDetailsCard({ bed, children }: IUserCard) {
                   e.stopPropagation();
                   handleNextImage();
                 }}
-                className="py-2 px-4 bg-gray-700 text-white rounded-lg hover:bg-gray-800"
+                className="py-2 px-4 bg-slate-700 text-white rounded-xl transition hover:bg-slate-800"
               >
                 Next
               </button>
