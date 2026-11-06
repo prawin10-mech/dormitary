@@ -16,29 +16,36 @@ export default function Header() {
   const closeSidebar = () => setSidebarOpen(false);
 
   return (
-    <header className="w-full bg-pink-200 py-4 px-6 shadow-md flex justify-between items-center">
-      {/* Sidebar Button */}
-      {admin && admin.role === "ADMIN" && (
+    <header className="sticky top-0 z-30 flex w-full items-center justify-between border-b border-slate-200 bg-white/90 px-4 py-3 shadow-sm backdrop-blur sm:px-6">
+      {/* Sidebar Button (reserve space when hidden to keep title centered) */}
+      {admin && admin.role === "ADMIN" ? (
         <button
           onClick={toggleSidebar}
-          className="p-2 lg:p-4 text-gray-700 hover:text-gray-900 transition-colors"
-          aria-label="Toggle Sidebar"
+          className="rounded-lg p-2 text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900"
+          aria-label="Toggle sidebar"
         >
           <IoMdMenu size={24} />
         </button>
+      ) : (
+        <span className="w-10" />
       )}
 
       {/* Title */}
-      <div className="cursor-pointer" onClick={() => router.push("/")}>
-        <h1 className="text-2xl lg:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-800 flex-grow text-center">
-          {process.env.NEXT_PUBLIC_TITLE}
+      <button
+        type="button"
+        className="cursor-pointer"
+        onClick={() => router.push("/")}
+        aria-label="Go home"
+      >
+        <h1 className="bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-xl font-extrabold text-transparent sm:text-2xl">
+          {process.env.NEXT_PUBLIC_TITLE || "Dormitary"}
         </h1>
-      </div>
+      </button>
 
       {/* Logout Button */}
       <button
         onClick={adminLogout}
-        className="p-2 lg:p-4 text-gray-700 hover:text-gray-900 transition-colors"
+        className="rounded-lg p-2 text-slate-600 transition-colors hover:bg-rose-50 hover:text-rose-600"
         aria-label="Logout"
       >
         <MdOutlineLogout size={24} />

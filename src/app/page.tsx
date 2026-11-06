@@ -1,131 +1,77 @@
 "use client";
 
+import { useEffect } from "react";
 import NewUserForm from "./components/NewUserForm";
 import Bed from "./components/Bed";
 import Header from "@/components/Header";
-import { useGlobalContext } from "@/lib/useGlobalContext";
-import { useEffect } from "react";
-import useForegroundNotifications from "../hooks/userForegroundNotifications";
-import RequestPushPermission from "@/components/RequestPushPermission";
 import BedStats from "./components/BedStats";
+import { useGlobalContext } from "@/lib/useGlobalContext";
+import useForegroundNotifications from "../hooks/userForegroundNotifications";
+import { UserPlus, BedDouble } from "lucide-react";
 
 export default function Home() {
   const { beds, getBeds } = useGlobalContext();
 
   useEffect(() => {
     getBeds();
-  }, []);
+  }, [getBeds]);
 
   useEffect(() => {
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker
         .register("/firebase-messaging-sw.js")
-        .then((registration) => {
-          console.log(
-            "Service Worker registered with scope:",
-            registration.scope
-          );
-        })
-        .catch((err) => {
-          console.error("Service Worker registration failed:", err);
-        });
+        .catch(() => {});
     }
   }, []);
 
   useForegroundNotifications();
 
   return (
-    <div className="flex flex-col  scrollbar-width: none;">
-      <div className="w-full bg-white shadow-lg rounded-lg mb-4 md:mb-0">
-        <Header />
-      </div>
+    <div className="min-h-screen bg-slate-50">
+      <Header />
 
-      <BedStats />
+      <main className="mx-auto w-full max-w-7xl px-4 py-5 sm:px-6">
+        <BedStats />
 
-      <div className="flex flex-col lg:flex-row p-4 bg-gray-100 min-h-screen">
-        <div className="w-full lg:w-1/3 p-4 bg-white shadow-lg rounded-lg mb-4 md:mb-0">
-          <h1 className="text-2xl font-bold mb-4">Welcome</h1>
-          <NewUserForm />
+        <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,420px)_1fr]">
+          {/* Check-in form */}
+          <section className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+            <h2 className="mb-4 flex items-center gap-2 text-lg font-bold text-slate-800">
+              <UserPlus size={20} className="text-indigo-600" />
+              New check-in
+            </h2>
+            <NewUserForm />
+          </section>
+
+          {/* Beds */}
+          <section className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+            <h2 className="mb-4 flex items-center gap-2 text-lg font-bold text-slate-800">
+              <BedDouble size={20} className="text-indigo-600" />
+              Beds
+            </h2>
+
+            {beds.length === 0 ? (
+              <div className="flex h-48 flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 text-slate-400">
+                <BedDouble size={28} />
+                <p className="mt-2 text-sm">No beds to show yet</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
+                {beds.map((bed: any) => (
+                  <Bed
+                    key={bed._id}
+                    name={bed.bed}
+                    occupied={bed.isOccupied}
+                    endsIn={bed.occupiedDate}
+                    type={bed.type}
+                    bed={bed}
+                  />
+                ))}
+              </div>
+            )}
+          </section>
         </div>
-        <div className="flex flex-col lg:w-2/3 w-full p-1 sm:p-2 md:p-3 bg-red-200 shadow-lg rounded-lg overflow-auto h-full">
-          <h2 className="text-xl font-bold mb-4">Available Beds</h2>
-          <div className="flex-grow min-h-0">
-            {/* <div className="grid grid-cols-3  sm:grid-cols-6  mb-3">
-              {beds.slice(0, 12).map((bed: any) => (
-                <Bed
-                  key={bed._id}
-                  name={bed.bed}
-                  occupied={bed.isOccupied}
-                  endsIn={bed.occupiedDate}
-                  type={bed.type}
-                  bed={bed}
-                />
-              ))}
-            </div> */}
-            <div className="border-b-2 border-dotted border-gray-500 my-4" />
-            <div className="grid grid-cols-3  sm:grid-cols-5 ">
-              {beds
-                .filter((b: any) => b.bed <= 10)
-                .map((bed: any) => (
-                  <Bed
-                    key={bed._id}
-                    name={bed.bed}
-                    occupied={bed.isOccupied}
-                    endsIn={bed.occupiedDate}
-                    type={bed.type}
-                    bed={bed}
-                  />
-                ))}
-            </div>
-            <div className="border-b-2 border-dotted border-gray-500 my-4" />
-            <div className="grid grid-cols-3  sm:grid-cols-5 ">
-              {beds
-                .filter((b: any) => b.bed > 10 && b.bed <= 20)
-                .map((bed: any) => (
-                  <Bed
-                    key={bed._id}
-                    name={bed.bed}
-                    occupied={bed.isOccupied}
-                    endsIn={bed.occupiedDate}
-                    type={bed.type}
-                    bed={bed}
-                  />
-                ))}
-            </div>
-            <div className="border-b-2 border-dotted border-gray-500 my-4" />
-            <div className="grid grid-cols-3  sm:grid-cols-5 ">
-              {beds
-                .filter((b: any) => b.bed > 20 && b.bed <= 30)
-                .map((bed: any) => (
-                  <Bed
-                    key={bed._id}
-                    name={bed.bed}
-                    occupied={bed.isOccupied}
-                    endsIn={bed.occupiedDate}
-                    type={bed.type}
-                    bed={bed}
-                  />
-                ))}
-            </div>
-            <div className="border-b-2 border-dotted border-gray-500 my-4" />
-            <div className="grid grid-cols-3  sm:grid-cols-5 ">
-              {beds
-                .filter((b: any) => b.bed > 30 && b.bed <= 40)
-                .map((bed: any) => (
-                  <Bed
-                    key={bed._id}
-                    name={bed.bed}
-                    occupied={bed.isOccupied}
-                    endsIn={bed.occupiedDate}
-                    type={bed.type}
-                    bed={bed}
-                  />
-                ))}
-            </div>
-          </div>
-        </div>
-      </div>
-      {/* <RequestPushPermission /> */}
+      </main>
     </div>
   );
 }

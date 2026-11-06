@@ -72,27 +72,31 @@ const Bed: React.FC<IBeds> = ({ name, occupied, endsIn, type, bed }) => {
     return () => clearInterval(intervalId);
   }, [adjustedEndTime, bed]);
 
+  const expired = occupied && timeRemaining === "Expired";
+
   return (
-    <div className="p-1 md:p-3 lg:p-1 mx-auto bg-white shadow-md rounded-lg">
-      <UserCard bed={bed}>
-        <div
-          className={`p-1 md:p-3 lg:p-1 text-center w-24 ${
-            occupied
-              ? "bg-blue-200 text-blue-800"
-              : "bg-green-200 text-green-800"
-          } rounded-lg h-32 flex items-center justify-center`}
-        >
-          <div className="text-center">
-            <h3 className="text-lg font-semibold mb-2">
-              {name} {type && <span className="text-sm">({type})</span>}
-            </h3>
-            <p className="text-sm">
-              {occupied ? `Ends in: ${timeRemaining}` : "Available"}
-            </p>
-          </div>
-        </div>
-      </UserCard>
-    </div>
+    <UserCard bed={bed}>
+      <div
+        className={`flex h-28 w-full cursor-pointer flex-col items-center justify-center rounded-xl border p-2 text-center transition hover:shadow-md ${
+          !occupied
+            ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+            : expired
+            ? "border-rose-200 bg-rose-50 text-rose-700"
+            : "border-indigo-200 bg-indigo-50 text-indigo-700"
+        }`}
+      >
+        <span className="text-xs font-medium uppercase tracking-wide opacity-70">
+          Bed
+        </span>
+        <h3 className="text-xl font-bold leading-none">
+          {name}
+          {type && <span className="ml-1 text-xs font-medium">({type})</span>}
+        </h3>
+        <p className="mt-1.5 text-[11px] leading-tight">
+          {occupied ? timeRemaining : "Available"}
+        </p>
+      </div>
+    </UserCard>
   );
 };
 

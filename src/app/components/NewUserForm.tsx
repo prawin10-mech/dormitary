@@ -1,489 +1,386 @@
 "use client";
 
-import React, { useState } from "react";
-import { useForm, SubmitHandler, Resolver, FieldErrors } from "react-hook-form";
+import React, { useCallback, useRef, useState } from "react";
+import { useForm, SubmitHandler } from "react-hook-form";
 import { useGlobalContext } from "@/lib/useGlobalContext";
-import toast, { ToastBar, Toaster } from "react-hot-toast";
-import Image from "next/image";
+import toast, { Toaster } from "react-hot-toast";
+import { Camera, Loader2, ScanLine, Check, X, UserRound } from "lucide-react";
+import { runOcr, parseAadhaar, type AadhaarFields } from "@/lib/aadhaar";
 
 interface IFormInput {
   name?: string;
-  number: string; // *
+  number: string;
   email?: string;
   age?: number;
-  photo: FileList; // *
-  aadharFront: FileList; // *
-  aadharBack: FileList; // *
-  bed: string; // *
+  photo: FileList;
+  aadharFront: FileList;
+  aadharBack: FileList;
+  bed: string;
   period?: string;
   purpose?: string;
   paymentType?: string;
 }
 
-const resolver: Resolver<IFormInput> = async (values) => {
-  const errors: FieldErrors<IFormInput> = {};
-  
-  // Required fields validation
-  if (!values.bed) {
-    errors.bed = {
-      type: "required",
-      message: "Bed is required.",
-    };
-  }
-  
-  if (!values.number) {
-    errors.number = {
-      type: "required",
-      message: "Customer Number is required.",
-    };
-  }
+type ImgKey = "photo" | "aadharFront" | "aadharBack";
 
-  if (values.number && !/^\d+$/i.test(values.number)) {
-    errors.number = {
-      type: "pattern",
-      message: "Invalid number format. Only digits are allowed.",
-    };
-  }
+const inputClass =
+  "w-full px-4 py-3 border border-gray-300 rounded-xl text-base bg-white transition focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500";
+const labelClass = "block text-sm font-medium text-gray-700 mb-1.5";
 
-  if (!values.photo || values.photo.length === 0) {
-    errors.photo = {
-      type: "required",
-      message: "Photo is required.",
-    };
-  }
-  
-  if (!values.aadharFront || values.aadharFront.length === 0) {
-    errors.aadharFront = {
-      type: "required",
-      message: "Aadhar Front is required.",
-    };
-  }
-
-  if (!values.aadharBack || values.aadharBack.length === 0) {
-    errors.aadharBack = {
-      type: "required",
-      message: "Aadhar Back is required.",
-    };
-  }
-
-  // Optional field validations
-  if (values.email && !/^\S+@\S+$/i.test(values.email)) {
-    errors.email = {
-      type: "pattern",
-      message: "Invalid email address.",
-    };
-  }
-  
-  if (values.age && values.age < 16) {
-    errors.age = {
-      type: "min",
-      message: "Customer Age must be at least 16.",
-    };
-  }
-
-  return {
-    values: Object.keys(errors).length === 0 ? values : {},
-    errors: errors,
-  };
-};
+function fileListFrom(file: File): FileList {
+  const dt = new DataTransfer();
+  dt.items.add(file);
+  return dt.files;
+}
 
 const Form = () => {
   const { allocateBed, getBeds, beds, getCustomerDetails } = useGlobalContext();
   const {
     register,
     handleSubmit,
-    formState: { errors },
     reset,
     setValue,
-  } = useForm<IFormInput>({ resolver });
+    formState: { isSubmitting },
+  } = useForm<IFormInput>({ defaultValues: { period: "Day", paymentType: "Not Paid" } });
 
-  const [imagePreview, setImagePreview] = useState<string | ArrayBuffer | null>(
-    null
+  const [previews, setPreviews] = useState<Record<ImgKey, string | null>>({
+    photo: null,
+    aadharFront: null,
+    aadharBack: null,
+  });
+  const [ocrState, setOcrState] = useState<{
+    status: "idle" | "reading" | "done" | "error";
+    progress: number;
+    fields: AadhaarFields | null;
+  }>({ status: "idle", progress: 0, fields: null });
+
+  const setImage = useCallback(
+    (key: ImgKey, file: File) => {
+      setValue(key, fileListFrom(file), { shouldValidate: true });
+      const url = URL.createObjectURL(file);
+      setPreviews((p) => ({ ...p, [key]: url }));
+    },
+    [setValue]
   );
 
-  const [aadharFrontPreview, setAadharFrontPreview] = useState<
-    string | ArrayBuffer | null
-  >(null);
+  // --- Aadhaar OCR -> autofill ------------------------------------------------
+  const scanAadhaar = useCallback(
+    async (file: File) => {
+      setOcrState({ status: "reading", progress: 0, fields: null });
+      try {
+        const text = await runOcr(file, (pct) =>
+          setOcrState((s) => ({ ...s, progress: pct }))
+        );
+        const fields = parseAadhaar(text);
+        setOcrState({ status: "done", progress: 100, fields });
 
-  const [aadharBackPreview, setAadharBackPreview] = useState<
-    string | ArrayBuffer | null
-  >(null);
+        if (fields.name) setValue("name", fields.name, { shouldValidate: true });
+        if (typeof fields.age === "number")
+          setValue("age", fields.age, { shouldValidate: true });
 
-  const onSubmit: SubmitHandler<IFormInput> = (values) => {
-    console.log(values);
-    
-    // Prepare data with default values for optional fields
-    const formData = {
-      name: values.name || "",
-      email: values.email || "",
-      number: values.number,
-      age: values.age || 0,
-      photo: values.photo,
-      aadharFront: values.aadharFront,
-      aadharBack: values.aadharBack,
-      bed: values.bed,
-      period: values.period || "Day",
-      purpose: values.purpose || "",
-      paymentType: values.paymentType || "Not Paid",
-    };
-    
-    toast
-      .promise(
-        allocateBed(formData),
-        {
-          loading: "Allocating bed Please wait",
-          success: () => `Bed Allocated`,
-          error: (err) => `${err.toString()}`,
-        },
-        {
-          style: {
-            minWidth: "250px",
-          },
-          success: {
-            duration: 5000,
-            icon: "🔥",
-          },
-          error: {
-            duration: 5000,
-            icon: "🛑",
-          },
-        }
-      )
-      .then(({ blob, filename }) => {
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = url;
-        link.setAttribute("download", filename);
-        document.body.appendChild(link);
-        link.click();
-        getBeds();
-        setAadharFrontPreview(null);
-        setAadharBackPreview(null);
-        setImagePreview(null);
-        reset();
-      })
-      .catch((err) => {
-        console.log(err);
-      });
-  };
-
-  const handleNumberChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    try {
-      const number = e.target.value;
-      if (number.length === 10) {
-        const { customer } = await getCustomerDetails(number);
-
-        if (customer) {
-          setValue("name", customer.name || "");
-          setValue("email", customer.email || "");
-          setValue("age", customer.age || 0);
-          setValue("bed", customer.bed.bed);
-          setValue("period", customer.period || "");
-          setValue("paymentType", customer.paymentType || "");
-          setValue("purpose", customer.purpose || "");
-
-          if (customer.photo) {
-            const photoBlob = await fetch(customer.photo).then((res) =>
-              res.blob()
-            );
-            const photoFile = new File([photoBlob], "photo.jpg", {
-              type: photoBlob.type,
-            });
-            setValue("photo", [photoFile] as unknown as FileList);
-            setImagePreview(URL.createObjectURL(photoBlob));
-          }
-
-          // Fetch and set aadhar preview
-          if (customer.aadharFront) {
-            const aadharBlob = await fetch(customer.aadharFront).then((res) =>
-              res.blob()
-            );
-            const aadharFile = new File([aadharBlob], "aadhar_front.jpg", {
-              type: aadharBlob.type,
-            });
-            setValue("aadharFront", [aadharFile] as unknown as FileList);
-            setAadharFrontPreview(URL.createObjectURL(aadharBlob));
-          }
-
-          if (customer.aadharBack) {
-            const aadharBlob = await fetch(customer.aadharBack).then((res) =>
-              res.blob()
-            );
-            const aadharFile = new File([aadharBlob], "aadhar_back.jpg", {
-              type: aadharBlob.type,
-            });
-            setValue("aadharBack", [aadharFile] as unknown as FileList);
-            setAadharBackPreview(URL.createObjectURL(aadharBlob));
-          }
-        }
+        const found = [
+          fields.name && "name",
+          typeof fields.age === "number" && "age",
+        ].filter(Boolean);
+        toast.success(
+          found.length
+            ? `Autofilled ${found.join(" & ")} from Aadhaar`
+            : "Scan complete — please fill details manually"
+        );
+      } catch {
+        setOcrState({ status: "error", progress: 0, fields: null });
+        toast.error("Couldn't read the Aadhaar. Enter details manually.");
       }
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || "Failed to get user data");
+    },
+    [setValue]
+  );
+
+  const onImgInput = (key: ImgKey) => (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImage(key, file);
+    if (key === "aadharFront") scanAadhaar(file);
+  };
+
+  // --- Phone lookup (pre-fill returning guest) -------------------------------
+  const handleNumberChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const number = e.target.value;
+    if (number.length !== 10) return;
+    try {
+      const { customer } = await getCustomerDetails(number);
+      if (!customer) return;
+      setValue("name", customer.name || "");
+      setValue("email", customer.email || "");
+      setValue("age", customer.age || 0);
+      setValue("period", customer.period || "Day");
+      setValue("paymentType", customer.paymentType || "Not Paid");
+      setValue("purpose", customer.purpose || "");
+
+      const prevBed = customer.bed?.bed;
+      const current = beds.find((b: any) => b.bed === prevBed);
+      if (current && current.isOccupied) {
+        const free = beds.find((b: any) => !b.isOccupied);
+        if (free) {
+          setValue("bed", free.bed);
+          toast(`Bed ${prevBed} is occupied — selected free bed ${free.bed}`);
+        }
+      } else if (prevBed) {
+        setValue("bed", prevBed);
+      }
+      toast.success("Returning guest — details pre-filled");
+    } catch {
+      /* ignore lookup failures */
     }
   };
 
-  const onFileChange = (
-    e: React.ChangeEvent<HTMLInputElement>,
-    type: String
-  ) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        if (type === "Photo") {
-          setImagePreview(reader.result);
-        } else if (type === "aadharFront") {
-          setAadharFrontPreview(reader.result);
-        } else if (type === "aadharBack") {
-          setAadharBackPreview(reader.result);
+  const onSubmit: SubmitHandler<IFormInput> = async (values) => {
+    if (!values.number) return toast.error("Phone number is required");
+    if (!values.bed) return toast.error("Please select a bed");
+    if (!values.photo?.length) return toast.error("Guest photo is required");
+    if (!values.aadharFront?.length) return toast.error("Aadhaar front is required");
+    if (!values.aadharBack?.length) return toast.error("Aadhaar back is required");
+
+    try {
+      const { blob, filename } = await toast.promise(
+        allocateBed({
+          name: values.name || "",
+          email: values.email || "",
+          number: values.number,
+          age: values.age || 0,
+          photo: values.photo,
+          aadharFront: values.aadharFront,
+          aadharBack: values.aadharBack,
+          bed: values.bed,
+          period: values.period || "Day",
+          purpose: values.purpose || "",
+          paymentType: values.paymentType || "Not Paid",
+        }),
+        {
+          loading: "Allocating bed…",
+          success: "Bed allocated 🔥",
+          error: (err) => `${err.toString()}`,
         }
-      };
-      reader.readAsDataURL(file);
+      );
+
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+
+      getBeds();
+      setPreviews({ photo: null, aadharFront: null, aadharBack: null });
+      setOcrState({ status: "idle", progress: 0, fields: null });
+      reset({ period: "Day", paymentType: "Not Paid" });
+    } catch {
+      /* toast already surfaced the error */
     }
   };
+
+  const availableCount = beds.filter((b: any) => !b.isOccupied).length;
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      <div>
-        <label className="block text-gray-700">Customer Number *</label>
-        <input
-          type="text"
-          {...register("number")}
-          placeholder="Enter customer number"
-          onChange={handleNumberChange}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-        />
-        {errors.number && (
-          <span className="text-red-600">{errors.number.message}</span>
-        )}
-      </div>
-      <div>
-        <label className="block text-gray-700">Customer Name</label>
-        <input
-          type="text"
-          {...register("name")}
-          placeholder="Enter customer name"
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-        />
-        {errors.name && (
-          <span className="text-red-600">{errors.name.message}</span>
-        )}
-      </div>
-      <div>
-        <label className="block text-gray-700 font-medium mb-2">Bed *</label>
-        <select
-          {...register("bed")}
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition ease-in-out duration-150"
-        >
-          <option value="" disabled>
-            Select a Bed
-          </option>
-          {beds.map((bed: any) => (
-            <option
-              key={bed._id}
-              value={bed.bed}
-              disabled={bed.isOccupied}
-              className="cursor-pointer disabled:cursor-not-allowed"
-            >
-              {bed.bed}
-            </option>
-          ))}
-        </select>
-        {errors.bed && (
-          <span className="text-red-600 mt-1 text-sm">
-            {errors.bed.message}
-          </span>
-        )}
-      </div>
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      {/* 1. Aadhaar scan */}
+      <section>
+        <SectionTitle icon={<ScanLine size={18} />} title="Scan Aadhaar" hint="Front side auto-fills the form" />
+        <div className="grid grid-cols-2 gap-3">
+          <CaptureTile label="Aadhaar front" preview={previews.aadharFront} onPick={onImgInput("aadharFront")} busy={ocrState.status === "reading"} />
+          <CaptureTile label="Aadhaar back" preview={previews.aadharBack} onPick={onImgInput("aadharBack")} />
+        </div>
 
-      <div>
-        <label className="block text-gray-700">Customer Email</label>
-        <input
-          type="email"
-          {...register("email")}
-          placeholder="Enter customer email"
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-        />
-        {errors.email && (
-          <span className="text-red-600">{errors.email.message}</span>
-        )}
-      </div>
-      <div>
-        <label className="block text-gray-700">Customer Age</label>
-        <input
-          type="number"
-          {...register("age")}
-          placeholder="Enter customer age"
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-        />
-        {errors.age && (
-          <span className="text-red-600">{errors.age.message}</span>
-        )}
-      </div>
-
-      <div>
-        <label className="block text-gray-700">Purpose</label>
-        <input
-          type="text"
-          {...register("purpose")}
-          placeholder="Enter Purpose"
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-        />
-        {errors.purpose && (
-          <span className="text-red-600">{errors.purpose.message}</span>
-        )}
-      </div>
-
-      <div>
-        <label className="block text-gray-700 font-medium mb-2">
-          Period Of Days
-        </label>
-        <select
-          {...register("period")}
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition ease-in-out duration-150"
-        >
-          {["Day", "Month"].map((bed: any) => (
-            <option
-              key={bed}
-              value={bed}
-              className="cursor-pointer disabled:cursor-not-allowed"
-            >
-              {bed}
-            </option>
-          ))}
-        </select>
-        {errors.period && (
-          <span className="text-red-600 mt-1 text-sm">
-            {errors.period.message}
-          </span>
-        )}
-      </div>
-
-      <div>
-        <label className="block text-gray-700 font-medium mb-2">
-          Payment Type
-        </label>
-        <select
-          {...register("paymentType")}
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition ease-in-out duration-150"
-        >
-          {["UPI", "Cash", "Not Paid"].map((bed: any) => (
-            <option
-              key={bed}
-              value={bed}
-              className="cursor-pointer disabled:cursor-not-allowed"
-            >
-              {bed}
-            </option>
-          ))}
-        </select>
-        {errors.paymentType && (
-          <span className="text-red-600 mt-1 text-sm">
-            {errors.paymentType.message}
-          </span>
-        )}
-      </div>
-
-      <div>
-        <label className="block text-gray-700">Photo *</label>
-        <input
-          type="file"
-          {...register("photo")}
-          accept="image/*"
-          capture="environment"
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-          onChange={(e) => onFileChange(e, "Photo")}
-        />
-        {errors.photo && (
-          <span className="text-red-600">{errors.photo.message}</span>
-        )}
-
-        {imagePreview && (
-          <div className="mt-4">
-            <Image
-              src={imagePreview as string}
-              alt="Preview"
-              width={200}
-              height={100}
-              className="w-full max-w-xs object-cover border border-gray-300 rounded-lg"
-            />
+        {ocrState.status === "reading" && (
+          <div className="mt-3 flex items-center gap-2 text-sm text-indigo-600">
+            <Loader2 size={16} className="animate-spin" />
+            Reading Aadhaar… {ocrState.progress}%
           </div>
         )}
-      </div>
-      <div>
-        <label className="block text-gray-700">Aadhar Front *</label>
-        <input
-          type="file"
-          accept="image/*"
-          capture="environment"
-          {...register("aadharFront")}
-          placeholder="Aadhar Front"
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-          onChange={(e) => onFileChange(e, "aadharFront")}
-        />
-        {errors.aadharFront && (
-          <span className="text-red-600">{errors.aadharFront.message}</span>
+        {ocrState.status === "done" && ocrState.fields && (
+          <DetectedPanel fields={ocrState.fields} />
         )}
-        {aadharFrontPreview && (
-          <div className="mt-4">
-            <Image
-              src={aadharFrontPreview as string}
-              alt="Preview"
-              width={200}
-              height={100}
-              className="w-full max-w-xs object-cover border border-gray-300 rounded-lg"
-            />
-          </div>
-        )}
-      </div>
+      </section>
 
-      <div>
-        <label className="block text-gray-700">Aadhar Back *</label>
-        <input
-          type="file"
-          accept="image/*"
-          capture="environment"
-          {...register("aadharBack")}
-          placeholder="aadharBack"
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-          onChange={(e) => onFileChange(e, "aadharBack")}
-        />
-        {errors.aadharBack && (
-          <span className="text-red-600">{errors.aadharBack.message}</span>
-        )}
-        {aadharBackPreview && (
-          <div className="mt-4">
-            <Image
-              src={aadharBackPreview as string}
-              alt="Preview"
-              width={200}
-              height={100}
-              className="w-full max-w-xs object-cover border border-gray-300 rounded-lg"
+      {/* 2. Guest photo */}
+      <section>
+        <SectionTitle icon={<UserRound size={18} />} title="Guest photo" />
+        <CaptureTile label="Take / upload photo" preview={previews.photo} onPick={onImgInput("photo")} wide />
+      </section>
+
+      {/* 3. Guest details */}
+      <section>
+        <SectionTitle title="Guest details" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="sm:col-span-2">
+            <label className={labelClass}>Phone number *</label>
+            <input
+              type="tel"
+              inputMode="numeric"
+              placeholder="10-digit mobile number"
+              {...register("number")}
+              onChange={handleNumberChange}
+              className={inputClass}
             />
           </div>
-        )}
-      </div>
+          <div>
+            <label className={labelClass}>Name</label>
+            <input type="text" placeholder="Full name" {...register("name")} className={inputClass} />
+          </div>
+          <div>
+            <label className={labelClass}>Age</label>
+            <input type="number" placeholder="Age" {...register("age")} className={inputClass} />
+          </div>
+          <div className="sm:col-span-2">
+            <label className={labelClass}>Email</label>
+            <input type="email" placeholder="email@example.com" {...register("email")} className={inputClass} />
+          </div>
+        </div>
+      </section>
+
+      {/* 4. Stay details */}
+      <section>
+        <SectionTitle title="Stay details" hint={`${availableCount} beds free`} />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className={labelClass}>Bed *</label>
+            <select {...register("bed")} className={inputClass} defaultValue="">
+              <option value="" disabled>Select a bed</option>
+              {beds.map((bed: any) => (
+                <option key={bed._id} value={bed.bed} disabled={bed.isOccupied}>
+                  Bed {bed.bed}{bed.isOccupied ? " — occupied" : ""}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className={labelClass}>Purpose</label>
+            <input type="text" placeholder="Purpose of stay" {...register("purpose")} className={inputClass} />
+          </div>
+          <div>
+            <label className={labelClass}>Period</label>
+            <select {...register("period")} className={inputClass}>
+              <option value="Day">Day</option>
+              <option value="Month">Month</option>
+            </select>
+          </div>
+          <div>
+            <label className={labelClass}>Payment</label>
+            <select {...register("paymentType")} className={inputClass}>
+              <option value="Not Paid">Not Paid</option>
+              <option value="UPI">UPI</option>
+              <option value="Cash">Cash</option>
+            </select>
+          </div>
+        </div>
+      </section>
+
       <button
         type="submit"
-        className="w-full bg-blue-500 text-white px-3 py-2 rounded-lg"
+        disabled={isSubmitting}
+        className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white font-semibold px-4 py-3.5 rounded-xl text-base transition shadow-sm"
       >
-        Submit
+        {isSubmitting ? <Loader2 size={18} className="animate-spin" /> : <Check size={18} />}
+        {isSubmitting ? "Allocating…" : "Allocate bed & print invoice"}
       </button>
-      <Toaster>
-        {(t) => (
-          <ToastBar
-            toast={t}
-            style={{
-              ...t.style,
-              animation: t.visible
-                ? "custom-enter 1s ease"
-                : "custom-exit 1s ease",
-            }}
-          />
-        )}
-      </Toaster>
+
+      <Toaster position="top-center" />
     </form>
   );
 };
+
+function SectionTitle({ icon, title, hint }: { icon?: React.ReactNode; title: string; hint?: string }) {
+  return (
+    <div className="flex items-center justify-between mb-3">
+      <h3 className="flex items-center gap-2 text-sm font-semibold text-gray-800 uppercase tracking-wide">
+        {icon}{title}
+      </h3>
+      {hint && <span className="text-xs text-gray-500">{hint}</span>}
+    </div>
+  );
+}
+
+function CaptureTile({
+  label,
+  preview,
+  onPick,
+  busy,
+  wide,
+}: {
+  label: string;
+  preview: string | null;
+  onPick: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  busy?: boolean;
+  wide?: boolean;
+}) {
+  const ref = useRef<HTMLInputElement>(null);
+  return (
+    <button
+      type="button"
+      onClick={() => ref.current?.click()}
+      className={`relative flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-gray-300 hover:border-indigo-400 bg-gray-50 hover:bg-indigo-50/40 transition overflow-hidden ${
+        wide ? "h-40 w-full max-w-xs" : "h-32 w-full"
+      }`}
+    >
+      {preview ? (
+        <>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={preview} alt={label} className="absolute inset-0 h-full w-full object-cover" />
+          {busy && (
+            <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+              <Loader2 className="animate-spin text-white" />
+            </div>
+          )}
+        </>
+      ) : (
+        <>
+          <Camera className="text-gray-400" />
+          <span className="text-xs text-gray-500 px-2 text-center">{label}</span>
+        </>
+      )}
+      <input
+        ref={ref}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        onChange={onPick}
+        className="hidden"
+      />
+    </button>
+  );
+}
+
+function DetectedPanel({ fields }: { fields: AadhaarFields }) {
+  const chips = [
+    fields.name && { label: "Name", value: fields.name },
+    typeof fields.age === "number" && { label: "Age", value: String(fields.age) },
+    fields.gender && { label: "Gender", value: fields.gender },
+    fields.dob && { label: "DOB", value: fields.dob },
+    fields.aadhaarLast4 && { label: "Aadhaar", value: `•••• •••• ${fields.aadhaarLast4}` },
+  ].filter(Boolean) as { label: string; value: string }[];
+
+  if (!chips.length)
+    return (
+      <p className="mt-3 flex items-center gap-1.5 text-xs text-amber-600">
+        <X size={14} /> Nothing detected — please enter details manually.
+      </p>
+    );
+
+  return (
+    <div className="mt-3 rounded-xl border border-indigo-100 bg-indigo-50/60 p-3">
+      <p className="text-xs font-medium text-indigo-700 mb-2 flex items-center gap-1.5">
+        <Check size={14} /> Detected from Aadhaar — review & edit below
+      </p>
+      <div className="flex flex-wrap gap-2">
+        {chips.map((c) => (
+          <span key={c.label} className="text-xs bg-white border border-indigo-200 rounded-full px-2.5 py-1 text-gray-700">
+            <span className="text-gray-400">{c.label}:</span> {c.value}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export default Form;
