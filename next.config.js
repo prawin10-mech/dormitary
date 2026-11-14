@@ -6,6 +6,8 @@ const nextConfig = {
   // Keeping them external prevents Next from trying to bundle them.
   experimental: {
     serverComponentsExternalPackages: ["mongoose"],
+    // Faster dev/build: only pull the icons actually used from these barrels.
+    optimizePackageImports: ["lucide-react"],
   },
 
   images: {

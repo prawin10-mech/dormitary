@@ -1,29 +1,20 @@
 "use client";
-import { usePathname, useRouter } from "next/navigation";
-import { animatePageOut } from "@/lib/animations";
+import Link from "next/link";
 
 interface Props {
   href: string;
   label: string;
 }
 
+// Instant client-side navigation (the old gsap screen-wipe was removed for speed).
 const TransitionLink = ({ href, label }: Props) => {
-  const router = useRouter();
-  const pathname = usePathname();
-
-  const handleClick = () => {
-    if (pathname !== href) {
-      animatePageOut(href, router);
-    }
-  };
-
   return (
-    <button
-      className="text-xl text-white-900 hover:text-gray-300"
-      onClick={handleClick}
+    <Link
+      href={href}
+      className="block text-base text-white hover:text-gray-300 transition-colors"
     >
       {label}
-    </button>
+    </Link>
   );
 };
 

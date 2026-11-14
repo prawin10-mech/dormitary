@@ -3,7 +3,6 @@ export interface IAdmin {
   _id: string;
   name: string;
   email: string;
-  fcmToken?: string[];
   profileImage?: string;
   role: "ADMIN" | "USER" | "AGENT";
   createdAt?: string;

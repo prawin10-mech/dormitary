@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useCallback, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { useGlobalContext } from "@/lib/useGlobalContext";
 import toast, { Toaster } from "react-hot-toast";
-import { Camera, Loader2, ScanLine, Check, X, UserRound } from "lucide-react";
+import { Camera, Loader2, ScanLine, Check, X, UserRound, Phone, FileText } from "lucide-react";
 import { runOcr, parseAadhaar, type AadhaarFields } from "@/lib/aadhaar";
+import { aadhaarPdfToSides, isPdf } from "@/lib/pdf";
 
 interface IFormInput {
   name?: string;
@@ -33,6 +34,21 @@ function fileListFrom(file: File): FileList {
   return dt.files;
 }
 
+/** Fetch a stored (Cloudinary) image URL and turn it back into a File. */
+async function urlToFile(url: string, name: string): Promise<File | null> {
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const blob = await res.blob();
+    const ext = (blob.type.split("/")[1] || "jpg").split("+")[0];
+    return new File([blob], `${name}.${ext}`, {
+      type: blob.type || "image/jpeg",
+    });
+  } catch {
+    return null;
+  }
+}
+
 const Form = () => {
   const { allocateBed, getBeds, beds, getCustomerDetails } = useGlobalContext();
   const {
@@ -40,8 +56,22 @@ const Form = () => {
     handleSubmit,
     reset,
     setValue,
+    watch,
     formState: { isSubmitting },
   } = useForm<IFormInput>({ defaultValues: { period: "Day", paymentType: "Not Paid" } });
+
+  const selectedBed = watch("bed");
+
+  // Auto-assign the first available bed whenever none is chosen (or the chosen
+  // one is gone/occupied). The operator can still override via the dropdown.
+  useEffect(() => {
+    if (!beds.length) return;
+    const chosen = beds.find((b: any) => b.bed === selectedBed);
+    if (!selectedBed || (chosen && chosen.isOccupied) || !chosen) {
+      const free = beds.find((b: any) => !b.isOccupied);
+      if (free && free.bed !== selectedBed) setValue("bed", free.bed);
+    }
+  }, [beds, selectedBed, setValue]);
 
   const [previews, setPreviews] = useState<Record<ImgKey, string | null>>({
     photo: null,
@@ -53,6 +83,7 @@ const Form = () => {
     progress: number;
     fields: AadhaarFields | null;
   }>({ status: "idle", progress: 0, fields: null });
+  const [lookupBusy, setLookupBusy] = useState(false);
 
   const setImage = useCallback(
     (key: ImgKey, file: File) => {
@@ -64,8 +95,10 @@ const Form = () => {
   );
 
   // --- Aadhaar OCR -> autofill ------------------------------------------------
-  const scanAadhaar = useCallback(
-    async (file: File) => {
+  // Plain function (not memoized) so it always closes over the latest `beds`
+  // via lookupByNumber.
+  const scanAadhaar = async (file: File) => {
+    {
       setOcrState({ status: "reading", progress: 0, fields: null });
       try {
         const text = await runOcr(file, (pct) =>
@@ -77,35 +110,61 @@ const Form = () => {
         if (fields.name) setValue("name", fields.name, { shouldValidate: true });
         if (typeof fields.age === "number")
           setValue("age", fields.age, { shouldValidate: true });
+        if (fields.phone) {
+          setValue("number", fields.phone, { shouldValidate: true });
+          lookupByNumber(fields.phone);
+        }
 
         const found = [
           fields.name && "name",
           typeof fields.age === "number" && "age",
+          fields.phone && "phone",
         ].filter(Boolean);
         toast.success(
           found.length
-            ? `Autofilled ${found.join(" & ")} from Aadhaar`
+            ? `Autofilled ${found.join(", ")} from Aadhaar`
             : "Scan complete — please fill details manually"
         );
       } catch {
         setOcrState({ status: "error", progress: 0, fields: null });
         toast.error("Couldn't read the Aadhaar. Enter details manually.");
       }
-    },
-    [setValue]
-  );
-
-  const onImgInput = (key: ImgKey) => (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setImage(key, file);
-    if (key === "aadharFront") scanAadhaar(file);
+    }
   };
 
-  // --- Phone lookup (pre-fill returning guest) -------------------------------
-  const handleNumberChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const number = e.target.value;
+  // Accepts an image OR a PDF holding both sides. A PDF fills front + back.
+  const onAadhaarInput = (key: "aadharFront" | "aadharBack") =>
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      if (isPdf(file)) {
+        const id = toast.loading("Reading PDF (front & back)…");
+        try {
+          const { front, back } = await aadhaarPdfToSides(file);
+          setImage("aadharFront", front);
+          setImage("aadharBack", back);
+          toast.success("Front & back extracted from PDF", { id });
+          scanAadhaar(front);
+        } catch {
+          toast.error("Couldn't read that PDF. Upload clear images instead.", {
+            id,
+          });
+        }
+        return;
+      }
+      setImage(key, file);
+      if (key === "aadharFront") scanAadhaar(file);
+    };
+
+  const onPhotoInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) setImage("photo", file);
+  };
+
+  // --- Phone lookup (pre-fill a returning guest, images included) ------------
+  const lookupByNumber = async (number: string) => {
     if (number.length !== 10) return;
+    setLookupBusy(true);
     try {
       const { customer } = await getCustomerDetails(number);
       if (!customer) return;
@@ -127,10 +186,31 @@ const Form = () => {
       } else if (prevBed) {
         setValue("bed", prevBed);
       }
-      toast.success("Returning guest — details pre-filled");
+
+      // Restore the previous photo & Aadhaar images from their stored URLs.
+      await Promise.all(
+        ([
+          ["photo", customer.photo],
+          ["aadharFront", customer.aadharFront],
+          ["aadharBack", customer.aadharBack],
+        ] as [ImgKey, string | undefined][]).map(async ([key, u]) => {
+          if (!u) return;
+          const f = await urlToFile(u, key);
+          if (f) setImage(key, f);
+        })
+      );
+
+      toast.success("Returning guest — details & documents pre-filled");
     } catch {
       /* ignore lookup failures */
+    } finally {
+      setLookupBusy(false);
     }
+  };
+
+  const handleNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const number = e.target.value.replace(/\D/g, "");
+    if (number.length === 10) lookupByNumber(number);
   };
 
   const onSubmit: SubmitHandler<IFormInput> = async (values) => {
@@ -184,15 +264,41 @@ const Form = () => {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-      {/* 1. Aadhaar scan */}
+      {/* 1. Phone number (drives returning-guest autofill) */}
       <section>
-        <SectionTitle icon={<ScanLine size={18} />} title="Scan Aadhaar *" hint="Front side auto-fills the form" />
-        <div className="grid grid-cols-2 gap-3">
-          <CaptureTile label="Aadhaar front" preview={previews.aadharFront} onPick={onImgInput("aadharFront")} busy={ocrState.status === "reading"} required />
-          <CaptureTile label="Aadhaar back" preview={previews.aadharBack} onPick={onImgInput("aadharBack")} required />
+        <SectionTitle icon={<Phone size={18} />} title="Phone number *" hint="Returning guest? We'll fill the rest" />
+        <div className="relative">
+          <input
+            type="tel"
+            inputMode="numeric"
+            autoComplete="tel"
+            placeholder="10-digit mobile number"
+            {...register("number")}
+            onChange={handleNumberChange}
+            className={inputClass}
+          />
+          {lookupBusy && (
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 text-xs text-indigo-600">
+              <Loader2 size={14} className="animate-spin" /> Looking up…
+            </span>
+          )}
         </div>
         <p className="mt-2 text-xs text-slate-500">
-          Guest photo and both Aadhaar sides are required to allocate a bed.
+          Enter the number first. If this guest stayed before, their details and
+          documents are filled in automatically.
+        </p>
+      </section>
+
+      {/* 2. Aadhaar scan */}
+      <section>
+        <SectionTitle icon={<ScanLine size={18} />} title="Scan Aadhaar *" hint="Image or a PDF with both sides" />
+        <div className="grid grid-cols-2 gap-3">
+          <CaptureTile label="Aadhaar front" preview={previews.aadharFront} onPick={onAadhaarInput("aadharFront")} busy={ocrState.status === "reading"} accept="image/*,application/pdf" required />
+          <CaptureTile label="Aadhaar back" preview={previews.aadharBack} onPick={onAadhaarInput("aadharBack")} accept="image/*,application/pdf" required />
+        </div>
+        <p className="mt-2 flex items-center gap-1.5 text-xs text-slate-500">
+          <FileText size={13} /> Front side auto-fills the form. Upload a single
+          PDF with both sides and it is split into front &amp; back.
         </p>
 
         {ocrState.status === "reading" && (
@@ -206,27 +312,16 @@ const Form = () => {
         )}
       </section>
 
-      {/* 2. Guest photo */}
+      {/* 3. Guest photo */}
       <section>
         <SectionTitle icon={<UserRound size={18} />} title="Guest photo *" />
-        <CaptureTile label="Take / upload photo" preview={previews.photo} onPick={onImgInput("photo")} wide required />
+        <CaptureTile label="Take / upload photo" preview={previews.photo} onPick={onPhotoInput} wide required />
       </section>
 
-      {/* 3. Guest details */}
+      {/* 4. Guest details */}
       <section>
         <SectionTitle title="Guest details" />
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="sm:col-span-2">
-            <label className={labelClass}>Phone number *</label>
-            <input
-              type="tel"
-              inputMode="numeric"
-              placeholder="10-digit mobile number"
-              {...register("number")}
-              onChange={handleNumberChange}
-              className={inputClass}
-            />
-          </div>
           <div>
             <label className={labelClass}>Name</label>
             <input type="text" placeholder="Full name" {...register("name")} className={inputClass} />
@@ -242,13 +337,18 @@ const Form = () => {
         </div>
       </section>
 
-      {/* 4. Stay details */}
+      {/* 5. Stay details */}
       <section>
         <SectionTitle title="Stay details" hint={`${availableCount} beds free`} />
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className={labelClass}>Bed *</label>
-            <select {...register("bed")} className={inputClass} defaultValue="">
+            <label className={labelClass}>
+              Bed *
+              <span className="ml-1 font-normal text-emerald-600">
+                (auto-assigned)
+              </span>
+            </label>
+            <select {...register("bed")} className={inputClass}>
               <option value="" disabled>Select a bed</option>
               {beds.map((bed: any) => (
                 <option key={bed._id} value={bed.bed} disabled={bed.isOccupied}>
@@ -256,6 +356,9 @@ const Form = () => {
                 </option>
               ))}
             </select>
+            <p className="mt-1 text-xs text-slate-500">
+              First free bed is picked automatically — change it if needed.
+            </p>
           </div>
           <div>
             <label className={labelClass}>Purpose</label>
@@ -311,6 +414,7 @@ function CaptureTile({
   busy,
   wide,
   required,
+  accept = "image/*",
 }: {
   label: string;
   preview: string | null;
@@ -318,8 +422,11 @@ function CaptureTile({
   busy?: boolean;
   wide?: boolean;
   required?: boolean;
+  accept?: string;
 }) {
   const ref = useRef<HTMLInputElement>(null);
+  // Only force the camera for image-only tiles; PDF tiles need the file picker.
+  const allowCapture = accept === "image/*";
   return (
     <button
       type="button"
@@ -351,8 +458,8 @@ function CaptureTile({
       <input
         ref={ref}
         type="file"
-        accept="image/*"
-        capture="environment"
+        accept={accept}
+        {...(allowCapture ? { capture: "environment" as const } : {})}
         onChange={onPick}
         className="hidden"
       />

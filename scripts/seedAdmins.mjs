@@ -26,7 +26,6 @@ const adminSchema = new mongoose.Schema(
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
     password: { type: String, required: true },
-    fcmToken: { type: [String], default: [] },
     role: { type: String, required: true, enum: ["ADMIN", "USER", "AGENT"] },
     profileImage: { type: String },
   },

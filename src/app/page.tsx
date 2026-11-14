@@ -6,7 +6,6 @@ import Bed from "./components/Bed";
 import Header from "@/components/Header";
 import BedStats from "./components/BedStats";
 import { useGlobalContext } from "@/lib/useGlobalContext";
-import useForegroundNotifications from "../hooks/userForegroundNotifications";
 import { UserPlus, BedDouble } from "lucide-react";
 
 export default function Home() {
@@ -15,16 +14,6 @@ export default function Home() {
   useEffect(() => {
     getBeds();
   }, [getBeds]);
-
-  useEffect(() => {
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker
-        .register("/firebase-messaging-sw.js")
-        .catch(() => {});
-    }
-  }, []);
-
-  useForegroundNotifications();
 
   return (
     <div className="min-h-screen bg-slate-50">

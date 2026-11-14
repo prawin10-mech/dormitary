@@ -2,10 +2,10 @@
 
 import React, { useState, WheelEvent, MouseEvent } from "react";
 import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -14,6 +14,24 @@ import {
 import Image from "next/image";
 import toast from "react-hot-toast";
 import { useGlobalContext } from "@/lib/useGlobalContext";
+import {
+  Phone,
+  Mail,
+  Calendar,
+  CalendarClock,
+  Clock,
+  CreditCard,
+  Tag,
+  Hash,
+  BedDouble,
+  LogOut,
+  CheckCircle2,
+  UserRound,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
+
+dayjs.extend(relativeTime);
 
 export interface IUserCard {
   bed: {
@@ -44,44 +62,35 @@ export default function UserCard({ bed, children }: IUserCard) {
   const [previewImageIndex, setPreviewImageIndex] = useState<number | null>(
     null
   );
-
-  // Collect images into an array, ignoring any undefined/null
-  const images = [
-    bed?.customer?.photo,
-    bed?.customer?.aadharFront,
-    bed?.customer?.aadharBack,
-  ].filter(Boolean);
-
-  // Keep your context logic for checking out a bed
   const { checkOutBed, getBeds } = useGlobalContext();
 
-  // Opens the preview modal at the given image index
-  const handleImageClick = (index: number) => {
-    setPreviewImageIndex(index);
-  };
+  // Labelled documents for the gallery (drops any missing image).
+  const docImages = [
+    { src: bed?.customer?.photo, label: "Photo" },
+    { src: bed?.customer?.aadharFront, label: "Aadhaar Front" },
+    { src: bed?.customer?.aadharBack, label: "Aadhaar Back" },
+  ].filter((d) => Boolean(d.src)) as { src: string; label: string }[];
 
-  // Closes the preview modal
+  const handleImageClick = (index: number) => setPreviewImageIndex(index);
   const handleClosePreview = () => {
     setPreviewImageIndex(null);
+    resetTransform();
   };
-
-  // Navigate to next image
   const handleNextImage = () => {
     if (previewImageIndex !== null) {
-      setPreviewImageIndex((prevIndex) => (prevIndex! + 1) % images.length);
+      resetTransform();
+      setPreviewImageIndex((p) => (p! + 1) % docImages.length);
     }
   };
-
-  // Navigate to previous image
   const handlePrevImage = () => {
     if (previewImageIndex !== null) {
+      resetTransform();
       setPreviewImageIndex(
-        (prevIndex) => (prevIndex! - 1 + images.length) % images.length
+        (p) => (p! - 1 + docImages.length) % docImages.length
       );
     }
   };
 
-  // Check-out logic
   const handleCheckout = async () => {
     toast
       .promise(checkOutBed(bed._id), {
@@ -89,25 +98,44 @@ export default function UserCard({ bed, children }: IUserCard) {
         success: () => `Bed successfully checked out!`,
         error: (err) => `${err.toString()}`,
       })
-      .then(() => {
-        getBeds();
-      })
+      .then(() => getBeds())
       .catch((err) => console.log(err));
   };
 
-  // Zoom and Drag States
+  // Zoom + drag state for the preview.
   const [zoomLevel, setZoomLevel] = useState<number>(1);
   const [isDragging, setIsDragging] = useState(false);
-  const [dragStart, setDragStart] = useState<{ x: number; y: number }>({
-    x: 0,
-    y: 0,
-  });
-  const [translate, setTranslate] = useState<{ x: number; y: number }>({
-    x: 0,
-    y: 0,
-  });
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [translate, setTranslate] = useState({ x: 0, y: 0 });
 
-  // If bed data is missing, display an error
+  const resetTransform = () => {
+    setZoomLevel(1);
+    setTranslate({ x: 0, y: 0 });
+  };
+
+  const handleWheelZoom = (e: WheelEvent<HTMLDivElement>) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setZoomLevel((prev) =>
+      e.deltaY < 0 ? Math.min(prev + 0.15, 5) : Math.max(prev - 0.15, 0.5)
+    );
+  };
+  const handleMouseDown = (e: MouseEvent<HTMLDivElement>) => {
+    e.stopPropagation();
+    if (zoomLevel <= 1) return;
+    setIsDragging(true);
+    setDragStart({ x: e.clientX - translate.x, y: e.clientY - translate.y });
+  };
+  const handleMouseMove = (e: MouseEvent<HTMLDivElement>) => {
+    if (!isDragging) return;
+    e.stopPropagation();
+    setTranslate({ x: e.clientX - dragStart.x, y: e.clientY - dragStart.y });
+  };
+  const handleMouseUpOrLeave = (e: MouseEvent<HTMLDivElement>) => {
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
   if (!bed) {
     return (
       <div className="text-center text-slate-500">
@@ -116,301 +144,302 @@ export default function UserCard({ bed, children }: IUserCard) {
     );
   }
 
-  // -------------
-  // Zoom Controls
-  // -------------
+  // --- Derived status / dates -------------------------------------------------
+  const customer = bed.customer;
+  const isMonth = customer?.period === "Month";
+  const checkInDate = bed.occupiedDate ? dayjs(bed.occupiedDate) : null;
+  const checkOutDate = checkInDate
+    ? checkInDate.add(1, isMonth ? "month" : "day")
+    : null;
+  const expired =
+    bed.isOccupied && checkOutDate ? checkOutDate.isBefore(dayjs()) : false;
+  const remaining =
+    bed.isOccupied && checkOutDate && !expired
+      ? checkOutDate.fromNow(true)
+      : null;
 
-  const resetTransform = () => {
-    setZoomLevel(1);
-    setTranslate({ x: 0, y: 0 });
-  };
+  const status = !bed.isOccupied
+    ? { label: "Available", cls: "bg-emerald-100 text-emerald-700 ring-emerald-200", dot: "bg-emerald-500" }
+    : expired
+    ? { label: "Expired", cls: "bg-rose-100 text-rose-700 ring-rose-200", dot: "bg-rose-500" }
+    : { label: "Occupied", cls: "bg-indigo-100 text-indigo-700 ring-indigo-200", dot: "bg-indigo-500" };
 
-  // -----------------
-  // Mouse Wheel Zoom
-  // -----------------
-  const handleWheelZoom = (e: WheelEvent<HTMLDivElement>) => {
-    e.stopPropagation();
-    e.preventDefault();
-    if (e.deltaY < 0) {
-      // Wheel Up => Zoom In
-      setZoomLevel((prev) => Math.min(prev + 0.1, 5));
-    } else {
-      // Wheel Down => Zoom Out
-      setZoomLevel((prev) => Math.max(prev - 0.1, 0.5));
-    }
-  };
-
-  // -----------
-  // Drag Logic
-  // -----------
-  const handleMouseDown = (e: MouseEvent<HTMLDivElement>) => {
-    e.stopPropagation();
-    // Only allow dragging if zoomLevel > 1
-    if (zoomLevel <= 1) return;
-    setIsDragging(true);
-    // Store the initial cursor position relative to the current translate
-    setDragStart({
-      x: e.clientX - translate.x,
-      y: e.clientY - translate.y,
-    });
-  };
-
-  const handleMouseMove = (e: MouseEvent<HTMLDivElement>) => {
-    if (!isDragging) return;
-    e.stopPropagation();
-    // Calculate how far the mouse has moved from the original drag start
-    setTranslate({
-      x: e.clientX - dragStart.x,
-      y: e.clientY - dragStart.y,
-    });
-  };
-
-  const handleMouseUpOrLeave = (e: MouseEvent<HTMLDivElement>) => {
-    e.stopPropagation();
-    setIsDragging(false);
-  };
+  const payment = customer?.paymentType || "Not Paid";
+  const paymentCls =
+    payment === "Not Paid"
+      ? "text-rose-600"
+      : "text-emerald-600";
 
   return (
     <Dialog>
-      <DialogTrigger>
-        <div className="cursor-pointer hover:bg-slate-100 p-2 rounded-md">
-          {children}
-        </div>
+      <DialogTrigger asChild>
+        <div className="cursor-pointer">{children}</div>
       </DialogTrigger>
 
-      {/*
-        Main Modal:
-        - Make it responsive for all screens
-        - Allow horizontal scroll for the images only
-        - Make sure content remains visible
-      */}
-      <DialogContent className="w-full max-w-xl sm:max-w-2xl px-4 py-6">
-        <DialogHeader className="border-b border-slate-200 pb-3">
-          <DialogTitle className="text-xl font-semibold text-slate-800">
-            Bed Information
-          </DialogTitle>
+      <DialogContent className="w-[calc(100vw-2rem)] max-w-lg overflow-hidden rounded-2xl p-0">
+        {/* Header */}
+        <DialogHeader className="space-y-0 border-b border-slate-100 bg-slate-50/80 px-5 py-4">
+          <div className="flex items-center justify-between gap-3 pr-7">
+            <DialogTitle className="flex items-center gap-2.5 text-left text-lg font-bold text-slate-800">
+              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-600 text-white shadow-sm">
+                <BedDouble size={20} />
+              </span>
+              <span>
+                Bed {bed.bed}
+                <span className="ml-1.5 rounded-md bg-slate-200 px-1.5 py-0.5 align-middle text-[11px] font-semibold text-slate-600">
+                  {bed.type}
+                </span>
+              </span>
+            </DialogTitle>
+            <span
+              className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ${status.cls}`}
+            >
+              <span className={`h-1.5 w-1.5 rounded-full ${status.dot}`} />
+              {status.label}
+            </span>
+          </div>
         </DialogHeader>
 
-        {/*
-          We add a wrapper with a vertical scroll if content gets too tall
-          e.g., max-h-[80vh] so it doesn't exceed the viewport height
-        */}
-        <div className="max-h-[80vh] overflow-y-auto mt-4 space-y-4 pr-2">
-          {/* Bed Details */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="font-medium text-slate-500">Bed Name:</span>
-              <span className="text-slate-800">{bed.bed}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="font-medium text-slate-500">Type:</span>
-              <span className="text-slate-800">{bed.type}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="font-medium text-slate-500">Period:</span>
-              <span className="text-slate-800">
-                {bed?.customer?.period || "N/A"}
-              </span>
-            </div>
-          </div>
+        <div className="max-h-[75vh] overflow-y-auto px-5 py-4">
+          {bed.isOccupied && customer ? (
+            <div className="space-y-5">
+              {/* Guest hero */}
+              <div className="flex items-center gap-3">
+                <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-full ring-2 ring-white shadow-md">
+                  {customer.photo ? (
+                    <Image
+                      src={customer.photo}
+                      alt={customer.name || "Guest"}
+                      fill
+                      className="cursor-pointer object-cover"
+                      onClick={() => {
+                        const i = docImages.findIndex((d) => d.label === "Photo");
+                        if (i >= 0) handleImageClick(i);
+                      }}
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center bg-slate-100 text-slate-400">
+                      <UserRound size={28} />
+                    </div>
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <h3 className="truncate text-lg font-bold text-slate-800">
+                    {customer.name || "Unknown guest"}
+                  </h3>
+                  {customer.number ? (
+                    <a
+                      href={`tel:${customer.number}`}
+                      className="mt-0.5 inline-flex items-center gap-1.5 text-sm font-medium text-indigo-600 hover:underline"
+                    >
+                      <Phone size={14} /> {customer.number}
+                    </a>
+                  ) : (
+                    <p className="text-sm text-slate-400">No phone on file</p>
+                  )}
+                </div>
+              </div>
 
-          {/* Customer Details */}
-          <div>
-            <span className="block font-medium text-slate-500 mb-2">
-              Customer Details:
-            </span>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="font-medium text-slate-500">Name:</span>
-                <span className="text-slate-800">
-                  {bed?.customer?.name || "N/A"}
-                </span>
+              {/* Time remaining banner */}
+              <div
+                className={`flex items-center gap-2 rounded-xl px-3.5 py-2.5 text-sm font-medium ${
+                  expired
+                    ? "bg-rose-50 text-rose-700"
+                    : "bg-indigo-50 text-indigo-700"
+                }`}
+              >
+                <Clock size={16} />
+                {expired ? (
+                  <span>Stay expired — ready for checkout</span>
+                ) : (
+                  <span>
+                    Checks out {remaining ? `in ${remaining}` : "soon"}
+                  </span>
+                )}
               </div>
-              <div className="flex items-center justify-between">
-                <span className="font-medium text-slate-500">Phone:</span>
-                <span className="text-slate-800">
-                  {bed?.customer?.number || "N/A"}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="font-medium text-slate-500">Age:</span>
-                <span className="text-slate-800">
-                  {bed?.customer?.age || "N/A"}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="font-medium text-slate-500">Email:</span>
-                <span className="text-slate-800">
-                  {bed?.customer?.email || "N/A"}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="font-medium text-slate-500">Check In:</span>
-                <span className="text-slate-800">
-                  {bed?.occupiedDate
-                    ? dayjs(bed?.occupiedDate).format("DD MMM YYYY hh:mm A")
-                    : "N/A"}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="font-medium text-slate-500">Check Out:</span>
-                <span className="text-slate-800">
-                  {bed?.occupiedDate
-                    ? dayjs(bed.occupiedDate)
-                        .add(1, "day")
-                        .format("DD MMM YYYY hh:mm A")
-                    : "N/A"}
-                </span>
-              </div>
-            </div>
-          </div>
 
-          {/* Images Section - Horizontal Scroll */}
-          {images.length > 0 && (
-            <div>
-              <span className="block font-medium text-slate-500 mb-2">
-                Images:
-              </span>
-              <div className="w-full overflow-x-auto flex gap-4">
-                {images.map((imgSrc, index) => (
-                  <div
-                    key={index}
-                    className="relative w-40 h-40 flex-shrink-0 border border-slate-200 rounded-lg overflow-hidden"
-                  >
-                    {imgSrc && (
-                      <Image
-                        src={imgSrc}
-                        alt={`Image ${index + 1}`}
-                        fill
-                        className="object-cover cursor-pointer"
-                        onClick={() => handleImageClick(index)}
-                      />
-                    )}
+              {/* Info grid */}
+              <div className="grid grid-cols-2 gap-x-3 gap-y-3.5">
+                <InfoItem icon={<Hash size={15} />} label="Age" value={customer.age ? String(customer.age) : "—"} />
+                <InfoItem icon={<Calendar size={15} />} label="Period" value={customer.period || "Day"} />
+                <InfoItem
+                  icon={<CreditCard size={15} />}
+                  label="Payment"
+                  value={payment}
+                  valueClass={paymentCls}
+                />
+                <InfoItem icon={<Tag size={15} />} label="Purpose" value={customer.purpose || "—"} />
+                <InfoItem
+                  icon={<Calendar size={15} />}
+                  label="Check in"
+                  value={checkInDate ? checkInDate.format("DD MMM, hh:mm A") : "—"}
+                />
+                <InfoItem
+                  icon={<CalendarClock size={15} />}
+                  label="Check out"
+                  value={checkOutDate ? checkOutDate.format("DD MMM, hh:mm A") : "—"}
+                />
+                {customer.email && (
+                  <div className="col-span-2">
+                    <InfoItem icon={<Mail size={15} />} label="Email" value={customer.email} />
                   </div>
-                ))}
+                )}
+              </div>
+
+              {/* Documents */}
+              {docImages.length > 0 && (
+                <div>
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                    Documents
+                  </p>
+                  <div className="grid grid-cols-3 gap-2.5">
+                    {docImages.map((doc, index) => (
+                      <button
+                        key={doc.label}
+                        type="button"
+                        onClick={() => handleImageClick(index)}
+                        className="group overflow-hidden rounded-xl border border-slate-200 text-left transition hover:border-indigo-300 hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                      >
+                        <div className="relative aspect-square w-full bg-slate-50">
+                          <Image
+                            src={doc.src}
+                            alt={doc.label}
+                            fill
+                            className="object-cover transition group-hover:scale-105"
+                          />
+                        </div>
+                        <span className="block truncate px-2 py-1 text-[11px] font-medium text-slate-500">
+                          {doc.label}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            /* Empty / available state */
+            <div className="flex flex-col items-center justify-center gap-3 py-10 text-center">
+              <span className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50 text-emerald-500">
+                <CheckCircle2 size={34} />
+              </span>
+              <div>
+                <p className="text-base font-semibold text-slate-800">
+                  Bed {bed.bed} is available
+                </p>
+                <p className="mt-0.5 text-sm text-slate-500">
+                  No guest is currently checked in to this {bed.type} bed.
+                </p>
               </div>
             </div>
           )}
-
-          {/* Purpose */}
-          <div>
-            <div className="flex items-center justify-between mt-4">
-              <span className="font-medium text-slate-500">Purpose:</span>
-              <span className="text-slate-800">
-                {bed?.customer?.purpose || "N/A"}
-              </span>
-            </div>
-          </div>
         </div>
 
-        {/* Footer: Check Out button */}
-        <DialogFooter className="flex flex-col sm:flex-row sm:justify-end space-y-2 sm:space-y-0 sm:space-x-2 mt-4">
-          {bed.isOccupied && (
+        {/* Footer */}
+        {bed.isOccupied && (
+          <DialogFooter className="border-t border-slate-100 bg-slate-50/80 px-5 py-3">
             <button
               onClick={handleCheckout}
-              className="px-4 py-2 bg-rose-600 text-white font-medium rounded-xl transition hover:bg-rose-700"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-rose-700 sm:w-auto"
             >
-              Check Out
+              <LogOut size={16} /> Check out guest
             </button>
-          )}
-        </DialogFooter>
+          </DialogFooter>
+        )}
       </DialogContent>
 
-      {/*
-        Preview Modal:
-        - Zoom with mouse wheel
-        - Drag to pan the image
-      */}
-      {previewImageIndex !== null && (
-        <Dialog open>
-          <DialogContent
-            className="w-full max-w-md sm:max-w-lg mx-auto flex flex-col items-center space-y-4 p-4"
-            onClick={handleClosePreview}
-          >
-            {/*
-              Zoomable + Draggable Container
-              - Remove "overflow-auto" or "overflow-scroll" so we can do the drag ourselves
-              - We'll do overflow-hidden to hide any extra image area
-            */}
+      {/* Image preview (zoom + pan) */}
+      {previewImageIndex !== null && docImages[previewImageIndex] && (
+        <Dialog open onOpenChange={(o) => !o && handleClosePreview()}>
+          <DialogContent className="flex w-[calc(100vw-2rem)] max-w-lg flex-col items-center gap-4 rounded-2xl p-4">
+            <div className="flex w-full items-center justify-start pr-7">
+              <span className="text-sm font-semibold text-slate-700">
+                {docImages[previewImageIndex].label}
+              </span>
+            </div>
+
             <div
-              className="relative w-72 h-72 sm:w-80 sm:h-80 overflow-hidden rounded-lg border border-slate-200"
-              // Prevent click on background from closing modal
+              className="relative h-72 w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-900/5 sm:h-80"
               onClick={(e) => e.stopPropagation()}
-              // Mouse wheel for zoom
               onWheel={handleWheelZoom}
-              // Mouse events for drag
               onMouseDown={handleMouseDown}
               onMouseMove={handleMouseMove}
               onMouseUp={handleMouseUpOrLeave}
               onMouseLeave={handleMouseUpOrLeave}
               style={{
                 cursor:
-                  zoomLevel > 1
-                    ? isDragging
-                      ? "grabbing"
-                      : "grab"
-                    : "default",
+                  zoomLevel > 1 ? (isDragging ? "grabbing" : "grab") : "default",
               }}
             >
-              {images[previewImageIndex] && (
-                <div
-                  className="absolute top-0 left-0"
-                  style={{
-                    transform: `
-                      translate(${translate.x}px, ${translate.y}px)
-                      scale(${zoomLevel})
-                    `,
-                    transformOrigin: "0 0", // top-left origin for simpler drag math
-                    width: "100%",
-                    height: "100%",
-                  }}
-                >
-                  <Image
-                    src={images[previewImageIndex]}
-                    alt="Preview"
-                    fill
-                    className="object-contain"
-                  />
-                </div>
-              )}
+              <div
+                className="absolute left-0 top-0 h-full w-full"
+                style={{
+                  transform: `translate(${translate.x}px, ${translate.y}px) scale(${zoomLevel})`,
+                  transformOrigin: "0 0",
+                }}
+              >
+                <Image
+                  src={docImages[previewImageIndex].src}
+                  alt="Preview"
+                  fill
+                  className="object-contain"
+                />
+              </div>
+              <span className="pointer-events-none absolute bottom-2 right-2 rounded-md bg-black/55 px-2 py-0.5 text-[11px] font-medium text-white">
+                Scroll to zoom · drag to pan
+              </span>
             </div>
 
-            {/* Navigation Buttons (Previous, Close, Next) */}
-            <div
-              className="flex w-full justify-evenly"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handlePrevImage();
-                }}
-                className="py-2 px-4 bg-slate-700 text-white rounded-xl transition hover:bg-slate-800"
-              >
-                Previous
-              </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleClosePreview();
-                }}
-                className="py-2 px-4 bg-rose-600 text-white rounded-xl transition hover:bg-rose-700"
-              >
-                Close
-              </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleNextImage();
-                }}
-                className="py-2 px-4 bg-slate-700 text-white rounded-xl transition hover:bg-slate-800"
-              >
-                Next
-              </button>
-            </div>
+            {docImages.length > 1 && (
+              <div className="flex w-full items-center justify-between">
+                <button
+                  onClick={handlePrevImage}
+                  className="inline-flex items-center gap-1 rounded-xl bg-slate-100 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-200"
+                >
+                  <ChevronLeft size={16} /> Prev
+                </button>
+                <span className="text-xs text-slate-400">
+                  {previewImageIndex + 1} / {docImages.length}
+                </span>
+                <button
+                  onClick={handleNextImage}
+                  className="inline-flex items-center gap-1 rounded-xl bg-slate-100 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-200"
+                >
+                  Next <ChevronRight size={16} />
+                </button>
+              </div>
+            )}
           </DialogContent>
         </Dialog>
       )}
     </Dialog>
+  );
+}
+
+function InfoItem({
+  icon,
+  label,
+  value,
+  valueClass = "text-slate-800",
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  valueClass?: string;
+}) {
+  return (
+    <div className="flex items-start gap-2.5">
+      <span className="mt-0.5 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-500">
+        {icon}
+      </span>
+      <div className="min-w-0">
+        <p className="text-[11px] font-medium uppercase tracking-wide text-slate-400">
+          {label}
+        </p>
+        <p className={`truncate text-sm font-semibold ${valueClass}`}>
+          {value}
+        </p>
+      </div>
+    </div>
   );
 }

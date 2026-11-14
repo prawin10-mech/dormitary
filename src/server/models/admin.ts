@@ -5,7 +5,6 @@ export interface IAdmin {
   name: string;
   email: string;
   password: string;
-  fcmToken?: string[];
   profileImage?: string;
   role: "ADMIN" | "USER" | "AGENT";
   createdAt?: Date;
@@ -23,7 +22,6 @@ const schema = new Schema<IAdmin>(
       trim: true,
     },
     password: { type: String, required: [true, "Password is Required"] },
-    fcmToken: { type: [String], default: [] },
     role: {
       type: String,
       required: [true, "Role is Required"],

@@ -2,8 +2,7 @@
 
 import { useGlobalContext } from "@/lib/useGlobalContext";
 import React, { useState } from "react";
-import { IoMdMenu } from "react-icons/io";
-import { MdOutlineLogout } from "react-icons/md";
+import { Menu, LogOut } from "lucide-react";
 import Sidebar from "../sidebar";
 import { useRouter } from "next/navigation";
 
@@ -24,7 +23,7 @@ export default function Header() {
           className="rounded-lg p-2 text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900"
           aria-label="Toggle sidebar"
         >
-          <IoMdMenu size={24} />
+          <Menu size={24} />
         </button>
       ) : (
         <span className="w-10" />
@@ -48,7 +47,7 @@ export default function Header() {
         className="rounded-lg p-2 text-slate-600 transition-colors hover:bg-rose-50 hover:text-rose-600"
         aria-label="Logout"
       >
-        <MdOutlineLogout size={24} />
+        <LogOut size={24} />
       </button>
 
       {admin && admin.role === "ADMIN" && (
