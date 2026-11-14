@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 // Routes that require a signed-in admin.
-const protectedPaths = ["/", "/history", "/user_history"];
+const protectedPaths = ["/", "/analytics", "/history", "/user_history"];
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -24,5 +24,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/", "/history", "/user_history", "/login"],
+  matcher: ["/", "/analytics", "/history", "/user_history", "/login"],
 };

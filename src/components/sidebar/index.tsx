@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect } from "react";
-import { X, Home, History, Users } from "lucide-react";
+import { X, Home, History, Users, BarChart3 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -12,6 +12,7 @@ interface SidebarProps {
 
 const links = [
   { href: "/", label: "Home", icon: Home },
+  { href: "/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/history", label: "Booking History", icon: History },
   { href: "/user_history", label: "User History", icon: Users },
 ];
