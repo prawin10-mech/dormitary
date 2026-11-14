@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -17,6 +18,7 @@ type LoginFormInput = z.infer<typeof LoginSchema>;
 
 export default function Login() {
   const { adminLogin, initialize } = useGlobalContext();
+  const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
 
   const {
@@ -36,6 +38,9 @@ export default function Login() {
         error: (err) => err?.toString() || "Login failed",
       });
       await initialize();
+      // Navigate to the dashboard (middleware only redirects on a fresh request).
+      router.replace("/");
+      router.refresh();
     } catch {
       /* toast already showed the error */
     }
