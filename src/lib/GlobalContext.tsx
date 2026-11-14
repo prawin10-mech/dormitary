@@ -11,6 +11,7 @@ import React, {
 } from "react";
 import { useRouter } from "next/navigation";
 import type { IAdmin, ICustomer } from "@/types";
+import { htmlToPdfBlob } from "@/lib/bill";
 
 // Same-origin Next.js API. Cookies (httpOnly auth) are sent automatically.
 const api = axios.create({ baseURL: "/api", withCredentials: true });
@@ -133,19 +134,6 @@ interface GlobalContextType {
 }
 
 export const GlobalContext = createContext<GlobalContextType | null>(null);
-
-/** Render invoice HTML to a downloadable PDF Blob in the browser (no server Chromium needed). */
-async function htmlToPdfBlob(html: string, filename: string): Promise<Blob> {
-  const html2pdf = (await import("html2pdf.js")).default;
-  const opt = {
-    filename,
-    margin: 8,
-    image: { type: "jpeg", quality: 0.95 },
-    html2canvas: { useCORS: true, scale: 2 },
-    jsPDF: { unit: "mm", format: "a4", orientation: "portrait" as const },
-  };
-  return html2pdf().set(opt).from(html).outputPdf("blob");
-}
 
 export function GlobalContextProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reducer, initialState);
