@@ -1,5 +1,8 @@
 import { model, models, Model, Schema, Types, Document } from "mongoose";
 import { BedTypes } from "../bedTypes";
+// Side-effect import: guarantees the referenced "Customer" model is registered
+// so `.populate("customer")` works regardless of route import order.
+import "./customer";
 
 export interface IBed extends Document {
   bed: string;

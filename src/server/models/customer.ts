@@ -1,4 +1,7 @@
 import { model, models, Model, Schema, Types, Document } from "mongoose";
+// Side-effect import: guarantees the referenced "Bed" model is registered so
+// `.populate("bed")` works regardless of route import order.
+import "./bed";
 
 export interface ICustomer extends Document {
   name?: string;
