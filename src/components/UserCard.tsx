@@ -14,9 +14,12 @@ import {
 import Image from "next/image";
 import toast from "react-hot-toast";
 import { useGlobalContext } from "@/lib/useGlobalContext";
+import { billUrl, waBillLink } from "@/lib/bill";
 import {
   Phone,
   Mail,
+  MessageCircle,
+  FileText,
   Calendar,
   CalendarClock,
   Clock,
@@ -42,6 +45,7 @@ export interface IUserCard {
     occupiedDate: Date;
     createdAt?: Date;
     customer?: {
+      _id?: string;
       name?: string;
       number?: string;
       age?: number;
@@ -337,12 +341,36 @@ export default function UserCard({ bed, children }: IUserCard) {
 
         {/* Footer */}
         {bed.isOccupied && (
-          <DialogFooter className="border-t border-slate-100 bg-slate-50/80 px-5 py-3">
+          <DialogFooter className="flex-col gap-2 border-t border-slate-100 bg-slate-50/80 px-5 py-3 sm:flex-row sm:justify-end">
+            {customer?._id && (
+              <>
+                <a
+                  href={waBillLink(
+                    customer.number || "",
+                    customer.name || "Guest",
+                    billUrl(customer._id)
+                  )}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#25D366] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#1ebe5b] sm:w-auto"
+                >
+                  <MessageCircle size={16} /> Send bill
+                </a>
+                <a
+                  href={billUrl(customer._id)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 sm:w-auto"
+                >
+                  <FileText size={16} /> Download bill
+                </a>
+              </>
+            )}
             <button
               onClick={handleCheckout}
               className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-rose-700 sm:w-auto"
             >
-              <LogOut size={16} /> Check out guest
+              <LogOut size={16} /> Check out
             </button>
           </DialogFooter>
         )}

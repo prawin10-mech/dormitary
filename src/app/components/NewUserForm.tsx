@@ -4,9 +4,10 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { useGlobalContext } from "@/lib/useGlobalContext";
 import toast, { Toaster } from "react-hot-toast";
-import { Camera, Loader2, ScanLine, Check, X, UserRound, Phone, FileText } from "lucide-react";
+import { Camera, Loader2, ScanLine, Check, X, UserRound, Phone, FileText, MessageCircle } from "lucide-react";
 import { runOcr, parseAadhaar, type AadhaarFields } from "@/lib/aadhaar";
 import { aadhaarPdfToSides, isPdf } from "@/lib/pdf";
+import { waBillLink } from "@/lib/bill";
 
 interface IFormInput {
   name?: string;
@@ -50,7 +51,15 @@ async function urlToFile(url: string, name: string): Promise<File | null> {
 }
 
 const Form = () => {
-  const { allocateBed, getBeds, beds, getCustomerDetails } = useGlobalContext();
+  const { allocateBed, getBeds, beds, getCustomerDetails } =
+    useGlobalContext();
+
+  // Last successful booking, for the "Send bill on WhatsApp" action.
+  const [lastBill, setLastBill] = useState<{
+    name: string;
+    number: string;
+    billUrl: string;
+  } | null>(null);
   const {
     register,
     handleSubmit,
@@ -221,7 +230,7 @@ const Form = () => {
     if (!values.aadharBack?.length) return toast.error("Aadhaar back is required");
 
     try {
-      const { blob, filename } = await toast.promise(
+      const { blob, filename, customer } = await toast.promise(
         allocateBed({
           name: values.name || "",
           email: values.email || "",
@@ -251,6 +260,16 @@ const Form = () => {
       link.remove();
       URL.revokeObjectURL(url);
 
+      // Offer to send the bill on WhatsApp. The bill is a public page served by
+      // the app (/bill/<id>) that the guest can open and save as a PDF.
+      if (customer?._id) {
+        setLastBill({
+          name: values.name || "Guest",
+          number: values.number,
+          billUrl: `${window.location.origin}/bill/${customer._id}`,
+        });
+      }
+
       getBeds();
       setPreviews({ photo: null, aadharFront: null, aadharBack: null });
       setOcrState({ status: "idle", progress: 0, fields: null });
@@ -264,6 +283,48 @@ const Form = () => {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      {/* WhatsApp bill share (after a successful allocation) */}
+      {lastBill && (
+        <div className="flex flex-col gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4">
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-emerald-800">
+                Bed allocated for {lastBill.name}
+              </p>
+              <p className="text-xs text-emerald-700">
+                Send the bill to the guest on WhatsApp, or open it to print.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setLastBill(null)}
+              className="rounded-lg p-1.5 text-emerald-700 transition hover:bg-emerald-100"
+              aria-label="Dismiss"
+            >
+              <X size={16} />
+            </button>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <a
+              href={waBillLink(lastBill.number, lastBill.name, lastBill.billUrl)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 rounded-xl bg-[#25D366] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#1ebe5b]"
+            >
+              <MessageCircle size={16} /> Send on WhatsApp
+            </a>
+            <a
+              href={lastBill.billUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 rounded-xl border border-emerald-300 bg-white px-4 py-2.5 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-50"
+            >
+              <FileText size={16} /> View bill
+            </a>
+          </div>
+        </div>
+      )}
+
       {/* 1. Phone number (drives returning-guest autofill) */}
       <section>
         <SectionTitle icon={<Phone size={18} />} title="Phone number *" hint="Returning guest? We'll fill the rest" />
