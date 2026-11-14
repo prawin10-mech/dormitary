@@ -4,10 +4,10 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { useGlobalContext } from "@/lib/useGlobalContext";
 import toast, { Toaster } from "react-hot-toast";
-import { Camera, Loader2, ScanLine, Check, X, UserRound, Phone, FileText, MessageCircle } from "lucide-react";
+import { Camera, Loader2, ScanLine, Check, X, UserRound, Phone, FileText, MessageCircle, Share2 } from "lucide-react";
 import { runOcr, parseAadhaar, type AadhaarFields } from "@/lib/aadhaar";
 import { aadhaarPdfToSides, isPdf } from "@/lib/pdf";
-import { waBillLink } from "@/lib/bill";
+import { waBillLink, billPdfFile, billMessage } from "@/lib/bill";
 
 interface IFormInput {
   name?: string;
@@ -60,6 +60,53 @@ const Form = () => {
     number: string;
     billUrl: string;
   } | null>(null);
+  // The bill as a PDF, prepared as soon as a booking succeeds so the share
+  // sheet can open straight from the button tap (browsers require a fresh tap).
+  const [billPdf, setBillPdf] = useState<File | null>(null);
+  const [billPdfBusy, setBillPdfBusy] = useState(false);
+
+  useEffect(() => {
+    setBillPdf(null);
+    if (!lastBill) return;
+    let cancelled = false;
+    setBillPdfBusy(true);
+    billPdfFile(lastBill.billUrl, lastBill.name)
+      .then((f) => !cancelled && setBillPdf(f))
+      .catch(() => {})
+      .finally(() => !cancelled && setBillPdfBusy(false));
+    return () => {
+      cancelled = true;
+    };
+  }, [lastBill]);
+
+  const sendBillPdf = useCallback(async () => {
+    if (!lastBill || !billPdf) return;
+    const text = billMessage(lastBill.name);
+    const shareData = { files: [billPdf], title: billPdf.name, text };
+    // Phones: open the share sheet with the PDF attached; pick WhatsApp there.
+    if (typeof navigator !== "undefined" && navigator.canShare?.(shareData)) {
+      try {
+        await navigator.share(shareData);
+      } catch (err: any) {
+        if (err?.name !== "AbortError") toast.error("Couldn't open sharing");
+      }
+      return;
+    }
+    // Desktop / unsupported: save the PDF and open the guest's chat to attach it.
+    const url = URL.createObjectURL(billPdf);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = billPdf.name;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 10_000);
+    window.open(
+      waBillLink(lastBill.number, lastBill.name, lastBill.billUrl),
+      "_blank",
+      "noopener,noreferrer"
+    );
+    toast("PDF saved. Attach it in the WhatsApp chat.", { icon: "📎" });
+  }, [lastBill, billPdf]);
+
   const {
     register,
     handleSubmit,
@@ -283,7 +330,7 @@ const Form = () => {
                 Bed allocated for {lastBill.name}
               </p>
               <p className="text-xs text-emerald-700">
-                Send the bill to the guest on WhatsApp, or open it to print.
+                Send the bill PDF to the guest on WhatsApp, send a link, or open it to print.
               </p>
             </div>
             <button
@@ -296,13 +343,22 @@ const Form = () => {
             </button>
           </div>
           <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={sendBillPdf}
+              disabled={!billPdf}
+              className="inline-flex items-center gap-2 rounded-xl bg-[#25D366] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#1ebe5b] disabled:opacity-60"
+            >
+              {billPdfBusy ? <Loader2 size={16} className="animate-spin" /> : <Share2 size={16} />}
+              {billPdfBusy ? "Preparing PDF…" : billPdf ? "Send PDF on WhatsApp" : "PDF unavailable"}
+            </button>
             <a
               href={waBillLink(lastBill.number, lastBill.name, lastBill.billUrl)}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 rounded-xl bg-[#25D366] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#1ebe5b]"
+              className="inline-flex items-center gap-2 rounded-xl border border-emerald-300 bg-white px-4 py-2.5 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-50"
             >
-              <MessageCircle size={16} /> Send on WhatsApp
+              <MessageCircle size={16} /> Send link
             </a>
             <a
               href={lastBill.billUrl}
