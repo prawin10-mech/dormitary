@@ -100,7 +100,7 @@ export async function POST(req: Request) {
       createDate: dayjs().utcOffset(330).format("YYYY-MM-DD hh:mm:ss A"),
       invoiceFrom: {
         name: "Sri vijayalakshmi A/C Dormitary, Tanuku, 534210",
-        phone: "9876543210",
+        phone: "9876643328",
       },
       invoiceNumber: customersCount,
       subTotalPrice: 200,
