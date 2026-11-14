@@ -14,7 +14,8 @@ export async function GET(
     requireAuth();
     await connectToDatabase();
 
-    const customer = await CustomerModel.findOne({ number: params.number })
+    const number = params.number.replace(/\D/g, "").slice(-10) || params.number;
+    const customer = await CustomerModel.findOne({ number })
       .sort({ createdAt: -1 })
       .populate("bed")
       .lean();

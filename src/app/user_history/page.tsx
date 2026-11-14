@@ -23,12 +23,14 @@ export default function Page() {
     setError(""); // Clear any previous error messages
     setLoading(true); // Start loading
     try {
-      if (!phoneNumber.match(/^\d{10}$/)) {
+      // Accept pasted values with spaces / +91 and match on the last 10 digits.
+      const digits = phoneNumber.replace(/\D/g, "").slice(-10);
+      if (digits.length !== 10) {
         setError("Please enter a valid 10-digit phone number.");
         setLoading(false);
         return;
       }
-      await getUserBookings({ number: phoneNumber.toString() });
+      await getUserBookings({ number: digits });
     } catch (err: any) {
       setError(err.message || "An error occurred.");
     } finally {

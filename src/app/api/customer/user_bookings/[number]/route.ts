@@ -14,7 +14,8 @@ export async function GET(
     requireAuth();
     await connectToDatabase();
 
-    const bookings = await CustomerModel.find({ number: params.number })
+    const number = params.number.replace(/\D/g, "").slice(-10) || params.number;
+    const bookings = await CustomerModel.find({ number })
       .populate("bed")
       .sort({ createdAt: -1 })
       .lean();
