@@ -180,13 +180,13 @@ export default function UserCard({ bed, children }: IUserCard) {
         <div className="cursor-pointer">{children}</div>
       </DialogTrigger>
 
-      <DialogContent className="w-[calc(100vw-2rem)] max-w-lg overflow-hidden rounded-2xl p-0">
+      <DialogContent className="flex max-h-[calc(100dvh-2rem)] w-[calc(100vw-1.5rem)] max-w-lg flex-col gap-0 overflow-hidden rounded-2xl p-0">
         {/* Header */}
-        <DialogHeader className="space-y-0 border-b border-slate-100 bg-slate-50/80 px-5 py-4">
+        <DialogHeader className="flex-shrink-0 space-y-0 border-b border-slate-100 bg-slate-50/80 px-4 py-3 sm:px-5 sm:py-4">
           <div className="flex items-center justify-between gap-3 pr-7">
             <DialogTitle className="flex items-center gap-2.5 text-left text-lg font-bold text-slate-800">
-              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-600 text-white shadow-sm">
-                <BedDouble size={20} />
+              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-600 text-white shadow-sm sm:h-10 sm:w-10 sm:rounded-xl">
+                <BedDouble size={18} />
               </span>
               <span>
                 Bed {bed.bed}
@@ -204,12 +204,12 @@ export default function UserCard({ bed, children }: IUserCard) {
           </div>
         </DialogHeader>
 
-        <div className="max-h-[75vh] overflow-y-auto px-5 py-4">
+        <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-5">
           {bed.isOccupied && customer ? (
-            <div className="space-y-5">
+            <div className="space-y-4">
               {/* Guest hero */}
               <div className="flex items-center gap-3">
-                <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-full ring-2 ring-white shadow-md">
+                <div className="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-full ring-2 ring-white shadow-md">
                   {customer.photo ? (
                     <Image
                       src={customer.photo}
@@ -228,7 +228,7 @@ export default function UserCard({ bed, children }: IUserCard) {
                   )}
                 </div>
                 <div className="min-w-0">
-                  <h3 className="truncate text-lg font-bold text-slate-800">
+                  <h3 className="truncate text-base font-bold text-slate-800 sm:text-lg">
                     {customer.name || "Unknown guest"}
                   </h3>
                   {customer.number ? (
@@ -246,7 +246,7 @@ export default function UserCard({ bed, children }: IUserCard) {
 
               {/* Time remaining banner */}
               <div
-                className={`flex items-center gap-2 rounded-xl px-3.5 py-2.5 text-sm font-medium ${
+                className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium ${
                   expired
                     ? "bg-rose-50 text-rose-700"
                     : "bg-indigo-50 text-indigo-700"
@@ -262,33 +262,31 @@ export default function UserCard({ bed, children }: IUserCard) {
                 )}
               </div>
 
-              {/* Info grid */}
-              <div className="grid grid-cols-2 gap-x-3 gap-y-3.5">
-                <InfoItem icon={<Hash size={15} />} label="Age" value={customer.age ? String(customer.age) : "—"} />
-                <InfoItem icon={<Calendar size={15} />} label="Period" value={customer.period || "Day"} />
+              {/* Info grid: compact label/value cells, readable on phones */}
+              <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-slate-200 bg-slate-200 text-sm">
+                <InfoItem icon={<Hash size={13} />} label="Age" value={customer.age ? String(customer.age) : "—"} />
+                <InfoItem icon={<Calendar size={13} />} label="Period" value={customer.period || "Day"} />
                 <InfoItem
-                  icon={<CreditCard size={15} />}
+                  icon={<CreditCard size={13} />}
                   label="Payment"
                   value={payment}
                   valueClass={paymentCls}
                 />
-                <InfoItem icon={<Tag size={15} />} label="Purpose" value={customer.purpose || "—"} />
+                <InfoItem icon={<Tag size={13} />} label="Purpose" value={customer.purpose || "—"} />
                 <InfoItem
-                  icon={<Calendar size={15} />}
+                  icon={<Calendar size={13} />}
                   label="Check in"
                   value={checkInDate ? checkInDate.format("DD MMM, hh:mm A") : "—"}
                 />
                 <InfoItem
-                  icon={<CalendarClock size={15} />}
+                  icon={<CalendarClock size={13} />}
                   label="Check out"
                   value={checkOutDate ? checkOutDate.format("DD MMM, hh:mm A") : "—"}
                 />
                 {customer.email && (
-                  <div className="col-span-2">
-                    <InfoItem icon={<Mail size={15} />} label="Email" value={customer.email} />
-                  </div>
+                  <InfoItem icon={<Mail size={13} />} label="Email" value={customer.email} wide />
                 )}
-              </div>
+              </dl>
 
               {/* Documents */}
               {docImages.length > 0 && (
@@ -296,7 +294,7 @@ export default function UserCard({ bed, children }: IUserCard) {
                   <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
                     Documents
                   </p>
-                  <div className="grid grid-cols-3 gap-2.5">
+                  <div className="grid grid-cols-3 gap-2">
                     {docImages.map((doc, index) => (
                       <button
                         key={doc.label}
@@ -304,7 +302,7 @@ export default function UserCard({ bed, children }: IUserCard) {
                         onClick={() => handleImageClick(index)}
                         className="group overflow-hidden rounded-xl border border-slate-200 text-left transition hover:border-indigo-300 hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
                       >
-                        <div className="relative aspect-square w-full bg-slate-50">
+                        <div className="relative aspect-[4/3] w-full bg-slate-50">
                           <Image
                             src={doc.src}
                             alt={doc.label}
@@ -341,7 +339,7 @@ export default function UserCard({ bed, children }: IUserCard) {
 
         {/* Footer */}
         {bed.isOccupied && (
-          <DialogFooter className="flex-col gap-2 border-t border-slate-100 bg-slate-50/80 px-5 py-3 sm:flex-row sm:justify-end">
+          <DialogFooter className="grid flex-shrink-0 grid-cols-2 gap-2 border-t border-slate-100 bg-slate-50/80 px-4 py-3 sm:flex sm:flex-row sm:justify-end sm:space-x-0 sm:px-5">
             {customer?._id && (
               <>
                 <a
@@ -352,7 +350,7 @@ export default function UserCard({ bed, children }: IUserCard) {
                   )}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#25D366] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#1ebe5b] sm:w-auto"
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#25D366] px-3 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#1ebe5b] sm:w-auto sm:px-4"
                 >
                   <MessageCircle size={16} /> Send bill
                 </a>
@@ -360,15 +358,15 @@ export default function UserCard({ bed, children }: IUserCard) {
                   href={billUrl(customer._id)}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 sm:w-auto"
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 sm:w-auto sm:px-4"
                 >
-                  <FileText size={16} /> Download bill
+                  <FileText size={16} /> View bill
                 </a>
               </>
             )}
             <button
               onClick={handleCheckout}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-rose-700 sm:w-auto"
+              className="col-span-2 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-rose-700 sm:w-auto"
             >
               <LogOut size={16} /> Check out
             </button>
@@ -449,25 +447,25 @@ function InfoItem({
   label,
   value,
   valueClass = "text-slate-800",
+  wide = false,
 }: {
   icon: React.ReactNode;
   label: string;
   value: string;
   valueClass?: string;
+  wide?: boolean;
 }) {
   return (
-    <div className="flex items-start gap-2.5">
-      <span className="mt-0.5 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-500">
+    <div
+      className={`min-w-0 bg-white px-3 py-2 ${wide ? "col-span-2" : ""}`}
+    >
+      <dt className="flex items-center gap-1 text-[11px] font-medium uppercase tracking-wide text-slate-400">
         {icon}
-      </span>
-      <div className="min-w-0">
-        <p className="text-[11px] font-medium uppercase tracking-wide text-slate-400">
-          {label}
-        </p>
-        <p className={`truncate text-sm font-semibold ${valueClass}`}>
-          {value}
-        </p>
-      </div>
+        {label}
+      </dt>
+      <dd className={`mt-0.5 break-words text-sm font-semibold leading-snug ${valueClass}`}>
+        {value}
+      </dd>
     </div>
   );
 }

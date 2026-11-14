@@ -37,6 +37,7 @@ type Action =
       payload: { isAuthenticated: boolean; admin: IAdmin | null };
     }
   | { type: "GET_BEDS"; payload: { beds: any[] } }
+  | { type: "UPDATE_BED"; payload: { bed: any } }
   | { type: "GET_CUSTOMER_DETAILS"; payload: { customer: ICustomer | null } }
   | { type: "GET_BEDS_HISTORY"; payload: { history: any | null } }
   | { type: "USER_BOOKINGS"; payload: { bookings: any } };
@@ -66,6 +67,13 @@ const reducer = (state: State, action: Action): State => {
       };
     case "GET_BEDS":
       return { ...state, beds: action.payload.beds };
+    case "UPDATE_BED":
+      return {
+        ...state,
+        beds: state.beds.map((b: any) =>
+          b._id === action.payload.bed?._id ? { ...b, ...action.payload.bed } : b
+        ),
+      };
     case "GET_CUSTOMER_DETAILS":
       return { ...state, customer: action.payload.customer };
     case "GET_BEDS_HISTORY":
@@ -117,7 +125,7 @@ interface GlobalContextType {
     period: string;
     purpose: string;
     paymentType: string;
-  }) => Promise<{ bed: any; customer: any; blob: Blob; filename: string }>;
+  }) => Promise<{ bed: any; customer: any }>;
   getBeds: () => Promise<{ beds: any[]; error?: string }>;
   beds: any;
   getUserBookings: (body: { number: string }) => Promise<{ bookings: any[] }>;
@@ -268,13 +276,22 @@ export function GlobalContextProvider({ children }: { children: ReactNode }) {
 
         // Let the browser set the multipart boundary automatically.
         const { data } = await api.post("/customer/allocate_bed", formData);
-        const { invoice, bed, customer } = data;
-        return {
-          bed,
-          customer,
-          blob: await htmlToPdfBlob(invoice.html, invoice.filename),
-          filename: invoice.filename,
-        };
+        const { bed, customer } = data;
+        // Mark the bed as occupied right away so the grid updates in place;
+        // the caller refreshes the full list from the server afterwards.
+        if (bed?._id) {
+          dispatch({
+            type: "UPDATE_BED",
+            payload: {
+              bed: {
+                ...bed,
+                isOccupied: true,
+                customer: bed.customer && typeof bed.customer === "object" ? bed.customer : customer,
+              },
+            },
+          });
+        }
+        return { bed, customer };
       } catch (error: any) {
         if (error?.response?.status === 401) onUnauthenticated();
         throw new Error(errorMessage(error, "Something went wrong"));

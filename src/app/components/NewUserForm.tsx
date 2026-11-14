@@ -230,7 +230,7 @@ const Form = () => {
     if (!values.aadharBack?.length) return toast.error("Aadhaar back is required");
 
     try {
-      const { blob, filename, customer } = await toast.promise(
+      const { customer } = await toast.promise(
         allocateBed({
           name: values.name || "",
           email: values.email || "",
@@ -251,17 +251,8 @@ const Form = () => {
         }
       );
 
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = filename;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      URL.revokeObjectURL(url);
-
-      // Offer to send the bill on WhatsApp. The bill is a public page served by
-      // the app (/bill/<id>) that the guest can open and save as a PDF.
+      // Stay on this page (no bill download / preview). Offer to send the bill
+      // on WhatsApp; the bill is a public page served by the app (/bill/<id>).
       if (customer?._id) {
         setLastBill({
           name: values.name || "Guest",
@@ -449,7 +440,7 @@ const Form = () => {
         className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white font-semibold px-4 py-3.5 rounded-xl text-base transition shadow-sm"
       >
         {isSubmitting ? <Loader2 size={18} className="animate-spin" /> : <Check size={18} />}
-        {isSubmitting ? "Allocating…" : "Allocate bed & print invoice"}
+        {isSubmitting ? "Allocating…" : "Allocate bed"}
       </button>
 
       <Toaster position="top-center" />
