@@ -53,7 +53,7 @@ export async function GET(
       createDate: when.format("YYYY-MM-DD hh:mm:ss A"),
       invoiceFrom: {
         name: "Sri vijayalakshmi A/C Dormitary, Tanuku, 534210",
-        phone: "9876543210",
+        phone: "9876643328",
       },
       invoiceNumber: String(customer._id).slice(-6).toUpperCase(),
       subTotalPrice: 200,

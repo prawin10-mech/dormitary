@@ -55,7 +55,7 @@ export async function POST(
       checkoutDate: date.utcOffset(330).format("DD-MM-YYYY hh:mm:ss A"),
       invoiceFrom: {
         name: "Sri vijayalakshmi A/C Dormitary, Tanuku, 534210",
-        phone: "9876543210",
+        phone: "9876643328",
       },
       invoiceNumber: customersCount,
       subTotalPrice: 300,
