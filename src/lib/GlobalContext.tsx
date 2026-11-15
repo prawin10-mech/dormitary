@@ -16,7 +16,14 @@ import type { IAdmin, ICustomer } from "@/types";
 const api = axios.create({ baseURL: "/api", withCredentials: true });
 
 function errorMessage(error: any, fallback: string): string {
-  return error?.response?.data?.message || fallback;
+  const data = error?.response?.data;
+  if (data?.message) return data.message;
+  // Network error (no response) or request setup error — distinguish from a
+  // generic server fault so the operator knows to check connectivity.
+  if (error?.code === "ERR_NETWORK" || error?.message === "Network Error") {
+    return "Can't reach the server. Check your connection and try again.";
+  }
+  return fallback;
 }
 
 interface State {

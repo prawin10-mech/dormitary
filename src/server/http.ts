@@ -12,6 +12,18 @@ export class HttpError extends Error {
   }
 }
 
+/**
+ * Server is missing configuration (an env var, a connected service). Surfaces
+ * the real cause to the operator instead of a generic 500, so they can fix it
+ * in Vercel settings instead of guessing.
+ */
+export class ConfigError extends HttpError {
+  constructor(message: string) {
+    super(503, message, "server_misconfigured");
+    this.name = "ConfigError";
+  }
+}
+
 export function json(data: unknown, status = 200) {
   return NextResponse.json(data, { status });
 }
@@ -27,10 +39,16 @@ export function handleError(error: unknown) {
   }
 
   if (error instanceof ZodError) {
+    const fieldErrors = error.flatten().fieldErrors;
+    // Prefer a concrete, field-aware message so the UI toast is actionable
+    // ("name: Required") instead of a generic "Validation failed".
+    const summary = Object.entries(fieldErrors)
+      .map(([field, msgs]) => `${field}: ${(msgs as string[])?.[0] ?? "invalid"}`)
+      .join("; ");
     return json(
       {
-        message: "Validation failed",
-        errors: error.flatten().fieldErrors,
+        message: summary || "Validation failed",
+        errors: fieldErrors,
       },
       400
     );

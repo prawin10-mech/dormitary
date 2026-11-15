@@ -1,6 +1,6 @@
 import jwt from "jsonwebtoken";
 import { cookies } from "next/headers";
-import { HttpError } from "./http";
+import { ConfigError, HttpError } from "./http";
 
 export const COOKIE_NAME = "accessToken";
 
@@ -12,9 +12,15 @@ export interface AuthPayload {
 function getSecret(): string {
   const secret = process.env.JWT_SECRET;
   if (!secret) {
-    throw new Error("JWT_SECRET is not set. Add it to your .env.local file.");
+    throw new ConfigError(
+      "Authentication is not configured on the server. Set JWT_SECRET in the Vercel project's environment variables."
+    );
   }
   return secret;
+}
+
+export function isAuthConfigured(): boolean {
+  return Boolean(process.env.JWT_SECRET);
 }
 
 export function signToken(payload: AuthPayload): string {
