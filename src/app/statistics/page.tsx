@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
+import PageTitle from "@/components/PageTitle";
 import {
   BarChart3,
   CalendarDays,
@@ -39,7 +40,7 @@ const inr = (n: number) =>
 
 const BAR_COLORS = ["#4f46e5", "#0ea5e9", "#10b981", "#f59e0b", "#ef4444"];
 
-export default function AnalyticsPage() {
+export default function StatisticsPage() {
   const router = useRouter();
   const [data, setData] = useState<Analytics | null>(null);
   const [error, setError] = useState<string>("");
@@ -52,10 +53,10 @@ export default function AnalyticsPage() {
         const res = await fetch("/api/analytics", { credentials: "include" });
         if (res.status === 401) return router.replace("/login");
         if (res.status === 403) {
-          if (active) setError("Analytics is available to admins only.");
+          if (active) setError("Statistics are available to admins only.");
           return;
         }
-        if (!res.ok) throw new Error("Failed to load analytics");
+        if (!res.ok) throw new Error("Failed to load statistics");
         const json = await res.json();
         if (active) setData(json);
       } catch (e: any) {
@@ -73,14 +74,15 @@ export default function AnalyticsPage() {
     <div className="min-h-screen bg-slate-50">
       <Header />
       <main className="mx-auto w-full max-w-6xl px-4 py-5 sm:px-6">
-        <div className="mb-5 flex items-center gap-2">
-          <BarChart3 className="text-indigo-600" size={24} />
-          <h1 className="text-2xl font-bold text-slate-800">Analytics</h1>
-        </div>
+        <PageTitle
+          icon={<BarChart3 size={20} />}
+          title="Statistics"
+          subtitle="Occupancy, bookings and revenue at a glance"
+        />
 
         {loading ? (
           <div className="flex h-60 items-center justify-center text-slate-400">
-            <Loader2 className="mr-2 animate-spin" /> Loading analytics…
+            <Loader2 className="mr-2 animate-spin" /> Loading statistics…
           </div>
         ) : error ? (
           <div className="flex h-40 items-center justify-center rounded-2xl border border-dashed border-slate-300 text-slate-500">
@@ -223,7 +225,7 @@ function BookingsBarChart({
     <div>
       <div className="flex h-44 items-end gap-1.5">
         {daily.map((d, i) => (
-          <div key={i} className="group flex flex-1 flex-col items-center justify-end">
+          <div key={i} className="group flex h-full flex-1 flex-col items-center justify-end">
             <span className="mb-1 text-[10px] font-semibold text-slate-500 opacity-0 transition group-hover:opacity-100">
               {d.count}
             </span>

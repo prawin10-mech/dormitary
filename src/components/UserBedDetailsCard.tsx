@@ -132,10 +132,8 @@ export default function UserBedDetailsCard({ bed, children }: IUserCard) {
   // ------------------------
   return (
     <Dialog>
-      <DialogTrigger>
-        <div className="cursor-pointer hover:bg-slate-100 p-2 rounded-md">
-          {children}
-        </div>
+      <DialogTrigger className="cursor-pointer rounded-md text-left underline-offset-2 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400">
+        {children}
       </DialogTrigger>
 
       {/*
@@ -144,8 +142,8 @@ export default function UserBedDetailsCard({ bed, children }: IUserCard) {
         - Allow horizontal scroll for the images only
         - Make sure content remains visible
       */}
-      <DialogContent className="w-full max-w-xl sm:max-w-2xl px-4 py-6">
-        <DialogHeader className="border-b border-slate-200 pb-3">
+      <DialogContent className="flex w-[calc(100vw-1.5rem)] max-w-xl flex-col overflow-hidden rounded-2xl px-4 py-6 sm:max-w-2xl sm:rounded-2xl">
+        <DialogHeader className="flex-shrink-0 border-b border-slate-200 pb-3 pr-6">
           <DialogTitle className="text-xl font-semibold text-slate-800">
             Bed Information
           </DialogTitle>
@@ -155,7 +153,7 @@ export default function UserBedDetailsCard({ bed, children }: IUserCard) {
           We add a wrapper with a vertical scroll if content gets too tall
           e.g., max-h-[80vh] so it doesn't exceed the viewport height
         */}
-        <div className="max-h-[80vh] overflow-y-auto mt-4 space-y-4 pr-2">
+        <div className="mt-4 min-h-0 flex-1 space-y-4 overflow-y-auto pr-2">
           {/* Bed Details */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
@@ -256,9 +254,9 @@ export default function UserBedDetailsCard({ bed, children }: IUserCard) {
         - Drag to pan the image
       */}
       {previewImageIndex !== null && (
-        <Dialog open>
+        <Dialog open onOpenChange={(o) => !o && handleClosePreview()}>
           <DialogContent
-            className="w-full max-w-md sm:max-w-lg mx-auto flex flex-col items-center space-y-4 p-4"
+            className="w-[calc(100vw-2rem)] max-w-md sm:max-w-lg mx-auto flex flex-col items-center space-y-4 p-4"
             onClick={handleClosePreview}
           >
             {/*

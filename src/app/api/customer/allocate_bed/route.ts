@@ -1,3 +1,4 @@
+import { PRICE_PER_BOOKING } from "@/lib/pricing";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import localizedFormat from "dayjs/plugin/localizedFormat";
@@ -92,7 +93,7 @@ export async function POST(req: Request) {
         title: existingBed.type === "AC" ? "AC BED" : "Regular Bed",
         description: `BED ${existingBed.bed}(${existingBed.type})`,
         quantity: 1,
-        price: 200,
+        price: PRICE_PER_BOOKING,
       },
       status: "paid",
       dueDate: dayjs().utcOffset(330).format("YYYY-MM-DD hh:mm:ss A"),

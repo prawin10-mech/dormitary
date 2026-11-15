@@ -15,6 +15,7 @@ import Image from "next/image";
 import toast from "react-hot-toast";
 import { useGlobalContext } from "@/lib/useGlobalContext";
 import { billUrl, waBillLink } from "@/lib/bill";
+import { downloadBill } from "@/lib/billPdf";
 import {
   Phone,
   Mail,
@@ -32,6 +33,8 @@ import {
   UserRound,
   ChevronLeft,
   ChevronRight,
+  Download,
+  Loader2,
 } from "lucide-react";
 
 dayjs.extend(relativeTime);
@@ -107,6 +110,19 @@ export default function UserCard({ bed, children }: IUserCard) {
   };
 
   // Zoom + drag state for the preview.
+  const [downloading, setDownloading] = useState(false);
+  const handleDownloadBill = async () => {
+    if (!bed?.customer?._id || downloading) return;
+    setDownloading(true);
+    try {
+      await downloadBill(bed.customer._id, bed.customer.name);
+    } catch (e: any) {
+      toast.error(e?.message || "Could not download the bill");
+    } finally {
+      setDownloading(false);
+    }
+  };
+
   const [zoomLevel, setZoomLevel] = useState<number>(1);
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
@@ -362,6 +378,15 @@ export default function UserCard({ bed, children }: IUserCard) {
                 >
                   <FileText size={16} /> View bill
                 </a>
+                <button
+                  type="button"
+                  onClick={handleDownloadBill}
+                  disabled={downloading}
+                  className="col-span-2 inline-flex w-full whitespace-nowrap items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-60 sm:w-auto sm:px-4"
+                >
+                  {downloading ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
+                  {downloading ? "Preparing PDF…" : "Download bill"}
+                </button>
               </>
             )}
             <button

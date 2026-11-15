@@ -2,6 +2,11 @@
 const nextConfig = {
   reactStrictMode: true,
 
+  // Analytics was renamed to Statistics; keep old links working.
+  async redirects() {
+    return [{ source: "/analytics", destination: "/statistics", permanent: true }];
+  },
+
   // Native / heavy server-only deps used by the API route handlers.
   // Keeping them external prevents Next from trying to bundle them.
   experimental: {

@@ -1,159 +1,120 @@
 "use client";
 
 import Header from "@/components/Header";
+import PageTitle from "@/components/PageTitle";
 import { useGlobalContext } from "@/lib/useGlobalContext";
 import React, { useEffect, useState } from "react";
 import dayjs from "dayjs";
-import advancedFormat from "dayjs/plugin/advancedFormat";
-import { HistoryResponse, HistoryRecord, Bed } from "@/types";
-import UserCard, { IUserCard } from "@/components/UserCard";
+import { HistoryRecord } from "@/types";
 import UserBedDetailsCard from "@/components/UserBedDetailsCard";
+import { PRICE_PER_BOOKING } from "@/lib/pricing";
+import { ChevronDown, History as HistoryIcon, CalendarDays } from "lucide-react";
 
-dayjs.extend(advancedFormat);
+const inr = (n: number) => "₹" + n.toLocaleString("en-IN");
+const monthName = (m: number) => dayjs().month(m - 1).format("MMMM");
+const countIn = (node: any): number =>
+  Array.isArray(node)
+    ? node.length
+    : Object.values(node || {}).reduce((s: number, n) => s + countIn(n), 0);
+const desc = (o: object) => Object.keys(o).map(Number).sort((a, b) => b - a);
 
 export default function History() {
   const { history, getBedHistory } = useGlobalContext();
-  const [expandedYear, setExpandedYear] = useState<number | null>(null);
-  const [expandedMonth, setExpandedMonth] = useState<number | null>(null);
-  const [selectedDay, setSelectedDay] = useState<number | null>(null);
-  const [selectedDayData, setSelectedDayData] = useState<
-    HistoryRecord[] | null
-  >(null);
-  const [dayTotal, setDayTotal] = useState<number | null>(null);
-  const [monthTotal, setMonthTotal] = useState<number | null>(null);
+  const [openYear, setOpenYear] = useState<number | null>(null);
+  const [openMonth, setOpenMonth] = useState<number | null>(null);
+  const [openDay, setOpenDay] = useState<number | null>(null);
 
   useEffect(() => {
     getBedHistory();
   }, [getBedHistory]);
 
-  const getMonthName = (monthNumber: number): string => {
-    const date = dayjs().month(monthNumber - 1); // Months are 0-indexed in Day.js
-    return date.format("MMMM");
-  };
+  // Open the most recent year/month by default once data arrives.
+  useEffect(() => {
+    if (!history || openYear !== null) return;
+    const years = desc(history);
+    if (!years.length) return;
+    setOpenYear(years[0]);
+    const months = desc(history[years[0]] || {});
+    if (months.length) setOpenMonth(months[0]);
+  }, [history, openYear]);
 
-  const handleYearClick = (year: number) => {
-    setExpandedYear(expandedYear === year ? null : year);
-    setExpandedMonth(null);
-    setSelectedDay(null);
-    setSelectedDayData(null);
-    setMonthTotal(null);
-  };
-
-  const handleMonthClick = (month: number) => {
-    setExpandedMonth(expandedMonth === month ? null : month);
-    setSelectedDay(null);
-    setSelectedDayData(null);
-    if (expandedMonth !== month) {
-      const days = history[expandedYear!][month];
-      const total = Object.values(days)
-        .flat()
-        .reduce((sum: number) => sum + 200, 0);
-      setMonthTotal(total);
-    } else {
-      setMonthTotal(null);
-    }
-  };
-
-  const handleDayClick = (day: number, records: HistoryRecord[]) => {
-    if (selectedDay === day) {
-      setSelectedDay(null);
-      setSelectedDayData(null);
-      setDayTotal(null);
-    } else {
-      setSelectedDay(day);
-      setSelectedDayData(records);
-      const total = records.reduce((sum, record) => sum + 200, 0);
-      setDayTotal(total);
-    }
-  };
-
-  const rowBase =
-    "flex items-center justify-between p-4 rounded-xl cursor-pointer bg-white ring-1 ring-slate-200 hover:ring-indigo-300 hover:bg-indigo-50/40 transition";
+  const hasData = history && Object.keys(history).length > 0;
 
   return (
     <div className="min-h-screen bg-slate-50">
       <Header />
       <main className="mx-auto w-full max-w-5xl px-4 py-5 sm:px-6">
-        <h1 className="mb-4 text-2xl font-bold text-slate-800">History</h1>
-        {history && Object.keys(history).length > 0 ? (
+        <PageTitle
+          icon={<HistoryIcon size={20} />}
+          title="Booking history"
+          subtitle="Every check-in, grouped by year, month and day"
+        />
+
+        {!hasData ? (
+          <div className="flex h-48 items-center justify-center rounded-2xl border border-dashed border-slate-300 text-slate-400">
+            No history data available.
+          </div>
+        ) : (
           <div className="space-y-3">
-            {Object.keys(history).map((yearStr) => {
-              const year = parseInt(yearStr, 10);
+            {desc(history).map((year) => {
               const months = history[year];
+              const yOpen = openYear === year;
               return (
-                <div key={year}>
-                  <div className={rowBase} onClick={() => handleYearClick(year)}>
-                    <h2 className="text-lg font-semibold text-slate-800">{year}</h2>
-                    <span className="text-slate-400">{expandedYear === year ? "−" : "+"}</span>
-                  </div>
-                  {expandedYear === year && (
-                    <div className="mt-2 space-y-2 pl-3 sm:pl-4">
-                      {Object.keys(months).map((monthStr) => {
-                        const month = parseInt(monthStr, 10);
+                <section key={year} className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200">
+                  <Row
+                    open={yOpen}
+                    onClick={() => {
+                      setOpenYear(yOpen ? null : year);
+                      setOpenMonth(null);
+                      setOpenDay(null);
+                    }}
+                    title={<span className="text-lg font-bold text-slate-800">{year}</span>}
+                    count={countIn(months)}
+                  />
+                  {yOpen && (
+                    <div className="space-y-2 border-t border-slate-100 bg-slate-50/60 p-2 sm:p-3">
+                      {desc(months).map((month) => {
                         const days = months[month];
+                        const mOpen = openMonth === month;
+                        const mCount = countIn(days);
                         return (
-                          <div key={month}>
-                            <div className={rowBase} onClick={() => handleMonthClick(month)}>
-                              <h2 className="font-semibold text-slate-700">
-                                {getMonthName(month)} {year}
-                              </h2>
-                              <span className="text-slate-400">{expandedMonth === month ? "−" : "+"}</span>
-                            </div>
-                            {expandedMonth === month && (
-                              <div className="mt-2 space-y-2 pl-3 sm:pl-4">
-                                {Object.keys(days).map((dayStr) => {
-                                  const day = parseInt(dayStr, 10);
-                                  const records = days[day];
+                          <div key={month} className="overflow-hidden rounded-xl bg-white ring-1 ring-slate-200">
+                            <Row
+                              open={mOpen}
+                              onClick={() => {
+                                setOpenMonth(mOpen ? null : month);
+                                setOpenDay(null);
+                              }}
+                              title={<span className="font-semibold text-slate-700">{monthName(month)} {year}</span>}
+                              count={mCount}
+                            />
+                            {mOpen && (
+                              <div className="border-t border-slate-100">
+                                {desc(days).map((day) => {
+                                  const records: HistoryRecord[] = days[day];
+                                  const dOpen = openDay === day;
                                   return (
-                                    <div key={day}>
-                                      <div className={rowBase} onClick={() => handleDayClick(day, records)}>
-                                        <h3 className="font-medium text-slate-700">
-                                          {day} {getMonthName(month)} {year}
-                                        </h3>
-                                        <span className="text-xs text-slate-400">{records.length} check-ins</span>
-                                      </div>
-                                      {selectedDay === day && selectedDayData && (
-                                        <div className="mt-2 overflow-hidden rounded-xl bg-white ring-1 ring-slate-200">
-                                          <div className="overflow-x-auto">
-                                            <table className="min-w-full divide-y divide-slate-200">
-                                              <thead className="bg-slate-50">
-                                                <tr>
-                                                  {["S. No", "Name", "Phone", "Bed", "Type", "Amount"].map((h) => (
-                                                    <th key={h} className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500">
-                                                      {h}
-                                                    </th>
-                                                  ))}
-                                                </tr>
-                                              </thead>
-                                              <tbody className="divide-y divide-slate-100">
-                                                {selectedDayData.map((record, index) => (
-                                                  <tr key={record.bed._id} className="hover:bg-slate-50">
-                                                    <td className="px-4 py-3 text-sm font-medium text-slate-900">{index + 1}</td>
-                                                    <td className="px-4 py-3 text-sm font-medium text-indigo-600 underline-offset-2 hover:underline">
-                                                      <UserBedDetailsCard bed={record}>{record.name}</UserBedDetailsCard>
-                                                    </td>
-                                                    <td className="px-4 py-3 text-sm text-slate-500">{record.phone}</td>
-                                                    <td className="px-4 py-3 text-sm text-slate-500">{record.bed.bed}</td>
-                                                    <td className="px-4 py-3 text-sm text-slate-500">{record.bed.type}</td>
-                                                    <td className="px-4 py-3 text-sm text-slate-500">₹200</td>
-                                                  </tr>
-                                                ))}
-                                              </tbody>
-                                            </table>
-                                            <div className="p-4 text-right font-bold text-slate-800">
-                                              Total for {day} {getMonthName(month)} {year}: ₹{dayTotal}
-                                            </div>
-                                          </div>
-                                        </div>
-                                      )}
+                                    <div key={day} className="border-b border-slate-100 last:border-b-0">
+                                      <Row
+                                        open={dOpen}
+                                        onClick={() => setOpenDay(dOpen ? null : day)}
+                                        title={
+                                          <span className="flex items-center gap-2 text-sm font-medium text-slate-700">
+                                            <CalendarDays size={15} className="text-slate-400" />
+                                            {day} {monthName(month)}
+                                          </span>
+                                        }
+                                        count={records.length}
+                                        compact
+                                      />
+                                      {dOpen && <DayTable records={records} />}
                                     </div>
                                   );
                                 })}
-                                {monthTotal !== null && (
-                                  <div className="p-3 text-right font-bold text-slate-800">
-                                    Total for {getMonthName(month)} {year}: ₹{monthTotal}
-                                  </div>
-                                )}
+                                <div className="flex justify-between bg-indigo-50/60 px-4 py-3 text-sm font-semibold text-indigo-900">
+                                  <span>{monthName(month)} total</span>
+                                  <span>{inr(mCount * PRICE_PER_BOOKING)}</span>
+                                </div>
                               </div>
                             )}
                           </div>
@@ -161,16 +122,112 @@ export default function History() {
                       })}
                     </div>
                   )}
-                </div>
+                </section>
               );
             })}
           </div>
-        ) : (
-          <div className="flex h-48 items-center justify-center rounded-2xl border border-dashed border-slate-300 text-slate-400">
-            No history data available.
-          </div>
         )}
       </main>
+    </div>
+  );
+}
+
+function Row({
+  open,
+  onClick,
+  title,
+  count,
+  compact,
+}: {
+  open: boolean;
+  onClick: () => void;
+  title: React.ReactNode;
+  count: number;
+  compact?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-expanded={open}
+      className={`flex w-full items-center justify-between gap-3 text-left transition hover:bg-indigo-50/50 ${
+        compact ? "px-4 py-2.5" : "px-4 py-3.5"
+      }`}
+    >
+      {title}
+      <span className="flex items-center gap-3">
+        <span className="hidden text-sm font-medium text-slate-500 sm:inline">
+          {inr(count * PRICE_PER_BOOKING)}
+        </span>
+        <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-600">
+          {count} {count === 1 ? "check-in" : "check-ins"}
+        </span>
+        <ChevronDown
+          size={18}
+          className={`text-slate-400 transition-transform ${open ? "rotate-180" : ""}`}
+        />
+      </span>
+    </button>
+  );
+}
+
+function DayTable({ records }: { records: HistoryRecord[] }) {
+  return (
+    <div className="bg-slate-50/60 px-2 pb-3 sm:px-4">
+      {/* Mobile list */}
+      <ul className="divide-y divide-slate-100 overflow-hidden rounded-xl bg-white ring-1 ring-slate-200 sm:hidden">
+        {records.map((r, i) => (
+          <li key={`${r.bed?._id}-${i}`} className="flex items-center justify-between gap-3 px-3 py-2.5">
+            <div className="min-w-0">
+              <div className="truncate text-sm font-semibold text-indigo-600">
+                <UserBedDetailsCard bed={r}>{r.name || "Guest"}</UserBedDetailsCard>
+              </div>
+              <p className="text-xs text-slate-500">
+                Bed {r.bed?.bed} · {r.bed?.type} · {r.phone}
+              </p>
+            </div>
+            <span className="text-sm font-semibold text-slate-700">{inr(PRICE_PER_BOOKING)}</span>
+          </li>
+        ))}
+      </ul>
+
+      {/* Desktop table */}
+      <div className="hidden overflow-x-auto rounded-xl bg-white ring-1 ring-slate-200 sm:block">
+        <table className="min-w-full divide-y divide-slate-200 text-sm">
+          <thead className="bg-slate-50">
+            <tr>
+              {["#", "Name", "Phone", "Bed", "Type", "Check in", "Amount"].map((h) => (
+                <th key={h} className={`px-4 py-2.5 text-xs font-medium uppercase tracking-wider text-slate-500 ${h === "Amount" ? "text-right" : "text-left"}`}>
+                  {h}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100">
+            {records.map((r, i) => (
+              <tr key={`${r.bed?._id}-${i}`} className="hover:bg-slate-50">
+                <td className="px-4 py-2.5 text-slate-400">{i + 1}</td>
+                <td className="px-4 py-2.5 font-medium text-indigo-600">
+                  <UserBedDetailsCard bed={r}>{r.name || "Guest"}</UserBedDetailsCard>
+                </td>
+                <td className="px-4 py-2.5 text-slate-500">{r.phone}</td>
+                <td className="px-4 py-2.5 text-slate-500">{r.bed?.bed}</td>
+                <td className="px-4 py-2.5 text-slate-500">{r.bed?.type}</td>
+                <td className="px-4 py-2.5 text-slate-500">{dayjs(r.createdAt).format("hh:mm A")}</td>
+                <td className="px-4 py-2.5 text-right font-medium text-slate-700">{inr(PRICE_PER_BOOKING)}</td>
+              </tr>
+            ))}
+          </tbody>
+          <tfoot className="bg-slate-50">
+            <tr>
+              <td colSpan={6} className="px-4 py-2.5 text-right font-semibold text-slate-700">Day total</td>
+              <td className="px-4 py-2.5 text-right font-bold text-slate-900">
+                {inr(records.length * PRICE_PER_BOOKING)}
+              </td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
     </div>
   );
 }
