@@ -3,11 +3,11 @@ import BedModel from "@/server/models/bed";
 import CustomerModel from "@/server/models/customer";
 import { requireRole } from "@/server/auth";
 import { handleError, json } from "@/server/http";
+import { PRICE_PER_BOOKING } from "@/lib/pricing";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const PRICE_PER_BOOKING = 300; // flat tariff used on the invoice
 const TZ = "+05:30";
 
 export async function GET() {

@@ -1,3 +1,4 @@
+import { PRICE_PER_BOOKING } from "@/lib/pricing";
 import mongoose from "mongoose";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
@@ -41,7 +42,7 @@ export async function GET(
         title: bed.type === "AC" ? "AC BED" : "Regular Bed",
         description: `BED ${bed.bed ?? "-"}(${bed.type ?? "-"})`,
         quantity: 1,
-        price: 200,
+        price: PRICE_PER_BOOKING,
       },
       status: "paid",
       dueDate: when.format("YYYY-MM-DD hh:mm:ss A"),
