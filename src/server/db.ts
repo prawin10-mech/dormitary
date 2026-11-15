@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { ConfigError } from "./http";
 
 /**
  * Cached Mongoose connection.
@@ -28,7 +29,9 @@ export async function connectToDatabase(): Promise<typeof mongoose> {
   if (cache.conn) return cache.conn;
 
   if (!MONGODB_URI) {
-    throw new Error("MONGODB_URI is not set. Add it to your .env.local file.");
+    throw new ConfigError(
+      "Database is not configured on the server. Set MONGODB_URI in the Vercel project's environment variables."
+    );
   }
 
   if (!cache.promise) {

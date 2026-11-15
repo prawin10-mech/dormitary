@@ -16,7 +16,13 @@ export const dynamic = "force-dynamic";
 export async function GET(req: Request) {
   try {
     const secret = process.env.CRON_SECRET;
-    if (secret) {
+    // Require the secret in production; in dev we allow an unauthenticated
+    // call so the local scheduler and manual curl both work.
+    if (!secret) {
+      if (process.env.NODE_ENV === "production") {
+        throw new HttpError(401, "CRON_SECRET is not set on the server");
+      }
+    } else {
       const auth = req.headers.get("authorization");
       if (auth !== `Bearer ${secret}`) throw new HttpError(401, "Unauthorized");
     }

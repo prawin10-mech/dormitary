@@ -247,7 +247,9 @@ const Form = () => {
         {
           loading: "Allocating bed…",
           success: "Bed allocated 🔥",
-          error: (err) => `${err.toString()}`,
+          // err is `new Error(serverMessage)`; show just the message, not "Error: …".
+          error: (err: unknown) =>
+            err instanceof Error ? err.message : String(err),
         }
       );
 

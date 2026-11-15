@@ -1,8 +1,13 @@
 import { v2 as cloudinary } from "cloudinary";
+import { ConfigError } from "./http";
 
 const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
 const apiKey = process.env.CLOUDINARY_API_KEY;
 const apiSecret = process.env.CLOUDINARY_API_SECRET;
+
+export function isCloudinaryConfigured(): boolean {
+  return Boolean(cloudName && apiKey && apiSecret);
+}
 
 cloudinary.config({
   cloud_name: cloudName,
@@ -15,9 +20,9 @@ cloudinary.config({
 export async function uploadFile(file: File, folder = "dormitary"): Promise<string> {
   // Fail fast with a clear message if the server env isn't configured — this is
   // the usual cause of a cryptic Cloudinary "Invalid request parameters" (400).
-  if (!cloudName || !apiKey || !apiSecret) {
-    throw new Error(
-      "Cloudinary is not configured. Set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET in .env, then restart the dev server."
+  if (!isCloudinaryConfigured()) {
+    throw new ConfigError(
+      "Image upload is not configured on the server. Set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET in the Vercel project's environment variables."
     );
   }
 
