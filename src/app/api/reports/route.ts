@@ -17,7 +17,7 @@ const MAX_RANGE_DAYS = 366;
  */
 export async function GET(request: Request) {
   try {
-    requireRole("ADMIN");
+    await requireRole("ADMIN");
 
     const url = new URL(request.url);
     const from = url.searchParams.get("from") || "";

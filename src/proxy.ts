@@ -4,7 +4,7 @@ import type { NextRequest } from "next/server";
 // Routes that require a signed-in admin.
 const protectedPaths = ["/", "/statistics", "/reports", "/history", "/user_history"];
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const hasSession = Boolean(request.cookies.get("accessToken")?.value);
 

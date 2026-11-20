@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const { adminId } = requireAuth();
+    const { adminId } = await requireAuth();
     await connectToDatabase();
 
     const admin = await AdminModel.findById(adminId).select("-password").lean();

@@ -12,7 +12,7 @@ const TZ = "+05:30";
 
 export async function GET() {
   try {
-    requireRole("ADMIN");
+    await requireRole("ADMIN");
     await connectToDatabase();
 
     const now = new Date();

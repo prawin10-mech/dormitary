@@ -17,10 +17,11 @@ export const dynamic = "force-dynamic";
 
 export async function POST(
   _req: Request,
-  { params }: { params: { bedId: string } }
+  props: { params: Promise<{ bedId: string }> }
 ) {
+  const params = await props.params;
   try {
-    requireAuth();
+    await requireAuth();
     const { bedId } = params;
     if (!bedId) throw new HttpError(400, "Invalid or missing bedId");
 

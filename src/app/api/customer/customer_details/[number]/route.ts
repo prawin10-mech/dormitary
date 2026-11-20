@@ -8,10 +8,11 @@ export const dynamic = "force-dynamic";
 
 export async function GET(
   _req: Request,
-  { params }: { params: { number: string } }
+  props: { params: Promise<{ number: string }> }
 ) {
+  const params = await props.params;
   try {
-    requireAuth();
+    await requireAuth();
     await connectToDatabase();
 
     const number = params.number.replace(/\D/g, "").slice(-10) || params.number;

@@ -41,7 +41,7 @@ function requireImage(form: FormData, key: string): File {
 
 export async function POST(req: Request) {
   try {
-    requireAuth();
+    await requireAuth();
     const form = await req.formData();
 
     const fields = FieldsSchema.parse({

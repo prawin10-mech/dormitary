@@ -32,8 +32,9 @@ function withDownloadBar(html: string, customerId: string): string {
 
 export async function GET(
   req: Request,
-  { params }: { params: { id: string } }
+  props: { params: Promise<{ id: string }> }
 ) {
+  const params = await props.params;
   if (!mongoose.Types.ObjectId.isValid(params.id)) {
     return new Response("Bill not found", { status: 404 });
   }
