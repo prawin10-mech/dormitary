@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    requireAuth();
+    await requireAuth();
     await connectToDatabase();
 
     const customers = await CustomerModel.find().populate("bed").lean();

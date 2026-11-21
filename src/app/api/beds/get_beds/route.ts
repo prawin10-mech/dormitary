@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const { role } = requireAuth();
+    const { role } = await requireAuth();
     await connectToDatabase();
 
     // Non-admins never receive the occupant's sensitive ID documents.

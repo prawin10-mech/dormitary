@@ -45,8 +45,8 @@ export function authCookieOptions() {
 }
 
 /** Read and verify the current admin from the request cookie. Returns null if absent/invalid. */
-export function getAuth(): AuthPayload | null {
-  const token = cookies().get(COOKIE_NAME)?.value;
+export async function getAuth(): Promise<AuthPayload | null> {
+  const token = (await cookies()).get(COOKIE_NAME)?.value;
   if (!token) return null;
   try {
     return verifyToken(token);
@@ -56,15 +56,15 @@ export function getAuth(): AuthPayload | null {
 }
 
 /** Like getAuth but throws a 401 when there is no valid session. */
-export function requireAuth(): AuthPayload {
-  const auth = getAuth();
+export async function requireAuth(): Promise<AuthPayload> {
+  const auth = await getAuth();
   if (!auth) throw new HttpError(401, "Not authenticated");
   return auth;
 }
 
 /** Throws 403 unless the current session has one of the allowed roles. */
-export function requireRole(...roles: AuthPayload["role"][]): AuthPayload {
-  const auth = requireAuth();
+export async function requireRole(...roles: AuthPayload["role"][]): Promise<AuthPayload> {
+  const auth = await requireAuth();
   if (!roles.includes(auth.role)) {
     throw new HttpError(403, "You do not have access to this resource");
   }

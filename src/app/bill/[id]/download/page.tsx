@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useParams } from "next/navigation";
 import { downloadBill } from "@/lib/billPdf";
 import { CheckCircle2, Download, Loader2, AlertCircle } from "lucide-react";
 
@@ -8,7 +9,8 @@ import { CheckCircle2, Download, Loader2, AlertCircle } from "lucide-react";
  * Public page that turns a booking's bill into a PDF and downloads it.
  * Linked from the "Download PDF" button on /bill/[id] (shared with guests).
  */
-export default function BillDownloadPage({ params }: { params: { id: string } }) {
+export default function BillDownloadPage() {
+  const params = useParams<{ id: string }>();
   const [state, setState] = useState<"working" | "done" | "error">("working");
   const started = useRef(false);
 

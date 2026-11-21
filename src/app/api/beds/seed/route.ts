@@ -13,7 +13,7 @@ export const dynamic = "force-dynamic";
  */
 export async function POST() {
   try {
-    requireRole("ADMIN");
+    await requireRole("ADMIN");
     await connectToDatabase();
 
     const existing = await BedModel.find({}, "bed").lean();
